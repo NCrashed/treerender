@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/treerender
+treerender.so
+treerender.dylib
+treerender.dll
+treerender.a
+treerender.lib
+treerender-test-*
+*.exe
+*.o
+*.obj
+*.lst
