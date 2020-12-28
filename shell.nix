@@ -11,6 +11,7 @@ stdenv.mkDerivation rec {
   name = "treerender-d-env";
   env = buildEnv { name = name; paths = buildInputs; };
 
+  LD_LIBRARY_PATH="/run/opengl-driver/lib:/run/opengl-driver-32/lib:${libGL}/lib";
   buildInputs = [
     dmd
     ldc
@@ -20,5 +21,6 @@ stdenv.mkDerivation rec {
     valgrind
     kdeApplications.kcachegrind
     pkg-config
+    libGL
   ];
 }

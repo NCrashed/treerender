@@ -7,6 +7,12 @@ import treerender.input;
 import treerender.v2;
 import treerender.world;
 
+/* Import the sharedlib module for error handling. Assigning an alias
+ ensures the function names do not conflict with other public APIs
+ and makes it obvious that the functions belong to the loader rather
+ than bindbc.sdl. */
+import loader = bindbc.loader.sharedlib;
+
 /// Iterate through user input and window events
 bool process_events(ref InputEvents events, ref v2i viewport) {
 	SDL_Event event = void;
@@ -71,43 +77,67 @@ void main()
 	}
 	scope(exit) Mix_CloseAudio();
 
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
 	auto window_size = v2i(1480, 1024);
-	auto screen = SDL_CreateWindow("No existonce", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.x, window_size.y, SDL_WINDOW_OPENGL);
-	if (!screen) {
+	const windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN; // SDL_WINDOW_RESIZABLE
+	auto window = SDL_CreateWindow("No existonce", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.x, window_size.y, windowFlags);
+	if (!window) {
 		SDL_Log("SDL window creation error: %s\n", SDL_GetError());
 		return;
 	}
-	scope(exit) SDL_DestroyWindow(screen);
+	scope(exit) SDL_DestroyWindow(window);
 
-	auto renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_ACCELERATED);
-	if (!renderer) {
-		SDL_Log("Unable to create renderer: %s\n", SDL_GetError());
+	auto context = SDL_GL_CreateContext(window);
+	if (!context) {
+		SDL_Log("SDL context creation error: %s\n", SDL_GetError());
 		return;
 	}
-	scope(exit) SDL_DestroyRenderer(renderer);
+	scope(exit) SDL_GL_DeleteContext(context);
+
+	const GLSupport openglLoaded = loadOpenGL();
+	if (openglLoaded < GLSupport.gl33) {
+		writeln("Error loading OpenGL shared library ", openglLoaded);
+		// Log the error info
+		foreach(info; loader.errors) {
+			// A hypothetical logging routine
+			writeln(info.error, info.message);
+		}
+		return;
+	}
+	SDL_GL_MakeCurrent(window, context);
+
+	int w,h;
+	SDL_GetWindowSize(window, &w, &h);
+	glViewport(0, 0, w, h);
+	glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
 
 	// Here we define which components are supported by the world
-	auto w = new World("./assets");
+	auto world = new World("./assets");
 
 	auto fps_file = File("fps.out", "w");
 	auto i = 1;
 	auto quit = false;
 	auto input_events = InputEvents();
 
+	SDL_GL_SetSwapInterval(0); // Disable VSync
+
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
 		quit = process_events(input_events, window_size);
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderClear(renderer);
-		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-		w.render(renderer);
-		SDL_RenderPresent(renderer);
+		world.render();
+		SDL_GL_SwapWindow(window);
 
 		immutable t2 = MonoTime.currTime();
 		immutable dt = cast(float)(t2 - t1).total!"usecs"() / 1000_000;
-		w.step(dt, input_events);
-		w.maintain();
+		world.step(dt, input_events);
+		world.maintain();
 
 		immutable fps = 1 / dt;
 		i += 1;

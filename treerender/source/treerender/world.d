@@ -3,7 +3,6 @@ module treerender.world;
 public import treerender.component;
 
 import treerender.input;
-import bindbc.sdl;
 import std.random;
 
 /// The game uses Entity-Component-System (ECS) design where all game entities
@@ -31,7 +30,7 @@ class World {
   }
 
   /// Render world in current frame
-  void render(SDL_Renderer* renderer) {
+  void render() {
 
   }
 

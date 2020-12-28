@@ -15,13 +15,14 @@
 		"bindbc-sdl": "static"
 	},
 	"versions": [
-		"SDL_Mixer"
+		"SDL_Mixer",
+		"GL_46"
 	],
 	"subPackages": [
 		"../decs"
 	],
 	"libs": [
 		"SDL2",
-		"SDL2_mixer"
+		"SDL2_mixer",
 	],
 }
