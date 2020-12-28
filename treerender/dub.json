@@ -1,13 +1,27 @@
 {
+	"name": "treerender",
+	"description": "A proof of concept of game that cannot be finished.",
+	"license": "MIT",
 	"authors": [
 		"NCrashed"
 	],
 	"copyright": "Copyright © 2020, Anton Gushcha",
 	"dependencies": {
 		"bindbc-opengl": "~>0.13.0",
-		"bindbc-sdl": "~>0.19.2"
+		"bindbc-sdl": "~>0.19.2",
+		"treerender:decs": "*",
 	},
-	"description": "A proof of concept of game that cannot be finished.",
-	"license": "MIT",
-	"name": "treerender"
+	"subConfigurations": {
+		"bindbc-sdl": "static"
+	},
+	"versions": [
+		"SDL_Mixer"
+	],
+	"subPackages": [
+		"../decs"
+	],
+	"libs": [
+		"SDL2",
+		"SDL2_mixer"
+	],
 }
