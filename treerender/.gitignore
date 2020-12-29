@@ -13,3 +13,4 @@ treerender-test-*
 *.o
 *.obj
 *.lst
+fps.out

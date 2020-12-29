@@ -13,6 +13,8 @@ class World {
   /// Container for all storages of the world supported.
   Storages!AllComponents storages;
 
+  final:
+
   /// Intialize internal storage, allocates memory for them
   this(string soundsDir) {
     storages.init();
