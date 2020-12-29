@@ -6,6 +6,7 @@ import std.stdio;
 import treerender.input;
 import treerender.v2;
 import treerender.world;
+import treerender.render.shader;
 
 /* Import the sharedlib module for error handling. Assigning an alias
  ensures the function names do not conflict with other public APIs
@@ -116,6 +117,18 @@ void main()
 	SDL_GetWindowSize(window, &w, &h);
 	glViewport(0, 0, w, h);
 	glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
+
+	glDepthFunc(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+
+	GLuint vertexArrayId;
+	glGenVertexArrays(1, &vertexArrayId);
+	glBindVertexArray(vertexArrayId);
+	scope(exit) glDeleteVertexArrays(1, &vertexArrayId);
+
+	auto programId = loadShaders( "./assets/shader/standard_vertex.glsl", "./assets/shader/standard_fragment.glsl" );
+	scope(exit) glDeleteProgram(programId);
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
