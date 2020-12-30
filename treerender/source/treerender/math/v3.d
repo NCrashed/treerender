@@ -1,6 +1,6 @@
-module treerender.v3;
+module treerender.math.v3;
 
-import treerender.math;
+import treerender.math.trigonometry;
 import std.math;
 import std.random;
 

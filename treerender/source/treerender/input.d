@@ -1,6 +1,6 @@
 module treerender.input;
 
-import treerender.v2;
+import treerender.math.v2;
 
 struct InputEvents {
   bool playerLeft = false;

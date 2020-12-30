@@ -1,4 +1,4 @@
-module treerender.math;
+module treerender.math.trigonometry;
 
 extern (C) void sincosf(float a, float* sina, float* cosb) @nogc pure; // from libm
 

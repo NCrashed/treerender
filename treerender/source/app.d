@@ -4,12 +4,9 @@ import core.time;
 import std.stdio;
 
 import treerender.input;
-import treerender.v2;
-import treerender.v3;
+import treerender.math;
 import treerender.world;
-import treerender.render.model;
-import treerender.render.shader;
-import treerender.render.texture;
+import treerender.render;
 
 /* Import the sharedlib module for error handling. Assigning an alias
  ensures the function names do not conflict with other public APIs
@@ -148,10 +145,10 @@ void main()
 	scope(exit) glDeleteTextures(1, &texture);
 	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
 
-	v3f[] verticies;
+	v3f[] vertices;
 	v2f[] uvs;
 	v3f[] normals;
-	loadObj("./assets/model/cube.obj", verticies, uvs, normals);
+	loadObj("./assets/model/cube.obj", vertices, uvs, normals);
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
@@ -163,11 +160,103 @@ void main()
 
 	SDL_GL_SetSwapInterval(0); // Disable VSync
 
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	scope(exit) glDeleteBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertices.length * v3f.sizeof, &vertices[0], GL_STATIC_DRAW);
+
+	GLuint uvbuffer;
+	glGenBuffers(1, &uvbuffer);
+	scope(exit) glDeleteBuffers(1, &uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, uvs.length * v2f.sizeof, &uvs[0], GL_STATIC_DRAW);
+
+	GLuint normalbuffer;
+	glGenBuffers(1, &normalbuffer);
+	scope(exit) glDeleteBuffers(1, &normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, normals.length * v3f.sizeof, &normals[0], GL_STATIC_DRAW);
+
+	// Get a handle for our "LightPosition" uniform
+	glUseProgram(programId);
+	GLuint lightId = glGetUniformLocation(programId, "LightPosition_worldspace");
+
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
 		quit = process_events(input_events, window_size);
 
-		world.render();
+		// world.render();
+		// Clear the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Use our shader
+		glUseProgram(programId);
+
+		// Compute the MVP matrix from keyboard and mouse input
+		auto projectionMatrix = getProjectionMatrix();
+		auto viewMatrix = getViewMatrix();
+		auto modelMatrix = mat4.identity;
+		auto mvp = projectionMatrix * viewMatrix * modelMatrix;
+
+		// Send our transformation to the currently bound shader,
+		// in the "MVP" uniform
+		glUniformMatrix4fv(matrixId, 1, GL_FALSE, mvp.data.ptr);
+		glUniformMatrix4fv(modelMatrixId, 1, GL_FALSE, modelMatrix.data.ptr);
+		glUniformMatrix4fv(viewMatrixId, 1, GL_FALSE, viewMatrix.data.ptr);
+
+		auto lightPos = v3f(4,4,4);
+		glUniform3f(lightId, lightPos.x, lightPos.y, lightPos.z);
+
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		// Set our "myTextureSampler" sampler to use Texture Unit 0
+		glUniform1i(textureId, 0);
+
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(
+			0,                  // attribute
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			null                // array buffer offset
+		);
+
+		// 2nd attribute buffer : UVs
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glVertexAttribPointer(
+			1,                                // attribute
+			2,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			null                             // array buffer offset
+		);
+
+		// 3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			null                              // array buffer offset
+		);
+
+		// Draw the triangles !
+		glDrawArrays(GL_TRIANGLES, 0, cast(int)vertices.length);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
+
 		SDL_GL_SwapWindow(window);
 
 		immutable t2 = MonoTime.currTime();

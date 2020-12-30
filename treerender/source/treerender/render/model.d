@@ -5,8 +5,8 @@ import std.container.array;
 import std.exception;
 import std.file;
 import std.stdio;
-import treerender.v2;
-import treerender.v3;
+import treerender.math.v2;
+import treerender.math.v3;
 
 void loadObj(string file, out v3f[] outVerticies, out v2f[] outUvs, out v3f[] outNormals) {
   writeln("Opening obj file ", file, "...");
