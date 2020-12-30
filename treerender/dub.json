@@ -16,6 +16,8 @@
 	},
 	"versions": [
 		"SDL_Mixer",
+		"SDL_Image",
+		"SDL_TTF",
 		"GL_46"
 	],
 	"subPackages": [
@@ -24,5 +26,7 @@
 	"libs": [
 		"SDL2",
 		"SDL2_mixer",
+		"SDL2_image",
+		"SDL2_ttf",
 	],
 }

@@ -5,8 +5,11 @@ import std.stdio;
 
 import treerender.input;
 import treerender.v2;
+import treerender.v3;
 import treerender.world;
+import treerender.render.model;
 import treerender.render.shader;
+import treerender.render.texture;
 
 /* Import the sharedlib module for error handling. Assigning an alias
  ensures the function names do not conflict with other public APIs
@@ -63,9 +66,16 @@ void main()
 	}
 	scope(exit) SDL_Quit();
 
-	immutable flags = 0;
-	immutable initted = Mix_Init(flags);
-	if ((initted & flags) != flags) {
+	const iflags = IMG_INIT_PNG | IMG_INIT_JPG;
+	if ((IMG_Init(iflags) & iflags) != iflags) {
+		SDL_Log("IMG_Init: %s\n", IMG_GetError());
+		return;
+	}
+	scope(exit) IMG_Quit();
+
+	const mflags = 0;
+	const initted = Mix_Init(mflags);
+	if ((initted & mflags) != mflags) {
 		SDL_Log("Unable to initialize SDL Mixer: %s\n", SDL_GetError());
 		return;
 	}
@@ -129,6 +139,19 @@ void main()
 
 	auto programId = loadShaders( "./assets/shader/standard_vertex.glsl", "./assets/shader/standard_fragment.glsl" );
 	scope(exit) glDeleteProgram(programId);
+
+	auto matrixId = glGetUniformLocation(programId, "MVP");
+	auto viewMatrixId = glGetUniformLocation(programId, "V");
+	auto modelMatrixId = glGetUniformLocation(programId, "M");
+
+	auto texture = loadTexture("./assets/texture/test.jpg");
+	scope(exit) glDeleteTextures(1, &texture);
+	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
+
+	v3f[] verticies;
+	v2f[] uvs;
+	v3f[] normals;
+	loadObj("./assets/model/cube.obj", verticies, uvs, normals);
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");

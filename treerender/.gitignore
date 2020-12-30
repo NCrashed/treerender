@@ -11,6 +11,5 @@ treerender.lib
 treerender-test-*
 *.exe
 *.o
-*.obj
 *.lst
 fps.out

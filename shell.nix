@@ -18,6 +18,8 @@ stdenv.mkDerivation rec {
     dub
     SDL2
     SDL2_mixer
+    SDL2_image
+    SDL2_ttf
     valgrind
     kdeApplications.kcachegrind
     pkg-config
