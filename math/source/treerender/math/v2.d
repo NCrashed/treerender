@@ -9,6 +9,8 @@ import treerender.math.trigonometry;
 alias v2f = vec2!float;
 /// Shorthand for integral vectors
 alias v2i = vec2!int;
+/// Shorthand for unsigned integral vectors
+alias v2u = vec2!uint;
 
 /// Vector type for 2 dimensions.
 struct vec2(T) {

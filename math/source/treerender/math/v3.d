@@ -9,6 +9,8 @@ import treerender.math.trigonometry;
 alias v3f = vec3!float;
 /// Shorthand for integral vectors
 alias v3i = vec3!int;
+/// Shorthand for unsigned integral vector
+alias v3u = vec3!uint;
 
 /// Vector type for 3 dimensions.
 struct vec3(T) {

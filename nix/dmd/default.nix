@@ -4,10 +4,10 @@
 , targetPackages, fetchpatch, bash
 , dmdBootstrap ? callPackage ./bootstrap.nix { }
 , HOST_DMD ? "${dmdBootstrap}/bin/dmd"
-, version ? "2.094.2"
-, dmdSha256 ? "0fbsah3kvvyggzx0mybg7x900rlz5kb73x1ndbjlp48c5p21rkv8"
-, druntimeSha256 ? "06v9fd7sb8micsywy25czmrskas7rlf3ckvf7qpyz58dbx2v8mbs"
-, phobosSha256 ? "0rxm0x4ppnygp8p0fg3gjl42cs75k2ij6fh7f0l8rmbq16z386bw"
+, version ? "2.095.0"
+, dmdSha256 ? "0vhfqmwzh77a1mdq4yg1ys5xii2w8fhkh07qqmm581jrs8582qqg"
+, druntimeSha256 ? "0742zxvsnh25pxp0hhm4v48h717f808vvym5rfkp5zicpwdnhhla"
+, phobosSha256 ? "1p3mzniwcd5pflh2j81xg8kz9h0rjh57vx9l04gq5ir0wj83fmdz"
 }:
 
 let

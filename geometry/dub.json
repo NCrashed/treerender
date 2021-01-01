@@ -5,5 +5,8 @@
 	"copyright": "Copyright © 2020, Anton Gushcha",
 	"description": "Procedural geometry sublibrary.",
 	"license": "MIT",
-	"name": "geometry"
+	"name": "geometry",
+	"dependencies": {
+		"treerender:math": "*",
+	},
 }
