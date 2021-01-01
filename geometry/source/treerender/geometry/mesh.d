@@ -10,7 +10,7 @@ enum Primitive {
   LINES,
 }
 
-/// Amount of indecies in primitive
+/// Amount of indices in primitive
 size_t primitiveParts(Primitive p) {
   final switch(p) {
     case Primitive.TRIANGLES: return 3;
@@ -18,7 +18,7 @@ size_t primitiveParts(Primitive p) {
   }
 }
 
-/// Encapsulates indecies that are required to define a one instance of primitive
+/// Encapsulates indices that are required to define a one instance of primitive
 struct PrimIndex(Primitive prim) {
   static if (prim == Primitive.TRIANGLES) {
     uint start;
@@ -44,7 +44,7 @@ struct Mesh(T, Primitive primitive = Primitive.TRIANGLES) {
   /// Vertex custom data (for instance color)
   Array!T data;
   /// Indecies of primitives
-  Array!(PrimIndex!primitive) indecies;
+  Array!(PrimIndex!primitive) indices;
 
   /// Alias to self
   alias This = Mesh!(T, primitive);
@@ -74,14 +74,14 @@ struct Mesh(T, Primitive primitive = Primitive.TRIANGLES) {
     data.insert(value);
   }
 
-  /// Write triangle indecies to mesh
+  /// Write triangle indices to mesh
   void insertTriangle()(v3u i) if(primitive == Primitive.TRIANGLES) {
-    indecies.insert(PrimIndex!primitive(i.x, i.y, i.z));
+    indices.insert(PrimIndex!primitive(i.x, i.y, i.z));
   }
 
-  /// Write triangle indecies to mesh
+  /// Write triangle indices to mesh
   void insertLine()(v2u i) if(primitive == Primitive.LINES) {
-    indecies.insert(PrimIndex!primitive(i.x, i.y));
+    indices.insert(PrimIndex!primitive(i.x, i.y));
   }
 }
 unittest {

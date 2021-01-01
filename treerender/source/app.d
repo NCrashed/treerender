@@ -4,10 +4,11 @@ import core.time;
 import std.math;
 import std.stdio;
 
+import treerender.geometry.loader.obj;
 import treerender.input;
 import treerender.math;
-import treerender.world;
 import treerender.render;
+import treerender.world;
 
 /* Import the sharedlib module for error handling. Assigning an alias
  ensures the function names do not conflict with other public APIs
@@ -146,10 +147,7 @@ void main()
 	scope(exit) glDeleteTextures(1, &texture);
 	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
 
-	v3f[] vertices;
-	v2f[] uvs;
-	v3f[] normals;
-	loadObj("./assets/model/suzanne.obj", vertices, uvs, normals);
+	auto mesh = loadObj("./assets/model/suzanne.obj");
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
@@ -166,19 +164,26 @@ void main()
 	glGenBuffers(1, &vertexbuffer);
 	scope(exit) glDeleteBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.length * v3f.sizeof, &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * v3f.sizeof, &mesh.vertices[0], GL_STATIC_DRAW);
 
 	GLuint uvbuffer;
 	glGenBuffers(1, &uvbuffer);
 	scope(exit) glDeleteBuffers(1, &uvbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.length * v2f.sizeof, &uvs[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, mesh.uvs.length * v2f.sizeof, &mesh.uvs[0], GL_STATIC_DRAW);
 
 	GLuint normalbuffer;
 	glGenBuffers(1, &normalbuffer);
 	scope(exit) glDeleteBuffers(1, &normalbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.length * v3f.sizeof, &normals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, mesh.normals.length * v3f.sizeof, &mesh.normals[0], GL_STATIC_DRAW);
+
+	// Generate a buffer for the indices as well
+	GLuint elementbuffer;
+	glGenBuffers(1, &elementbuffer);
+	scope(exit) glDeleteBuffers(1, &elementbuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.length * 3 * uint.sizeof, &mesh.indices[0] , GL_STATIC_DRAW);
 
 	// Get a handle for our "LightPosition" uniform
 	glUseProgram(programId);
@@ -253,8 +258,16 @@ void main()
 			null                              // array buffer offset
 		);
 
+		// Index buffer
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
 		// Draw the triangles !
-		glDrawArrays(GL_TRIANGLES, 0, cast(int)vertices.length);
+		glDrawElements(
+			GL_TRIANGLES,                         // mode
+			3 * cast(uint)mesh.indices.length,    // count
+			GL_UNSIGNED_INT,                      // type
+			null                                  // element array buffer offset
+		);
 
 		SDL_GL_SwapWindow(window);
 

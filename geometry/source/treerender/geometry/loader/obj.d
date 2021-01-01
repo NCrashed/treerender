@@ -1,19 +1,22 @@
-module treerender.render.model;
+module treerender.geometry.loader.obj;
 
 import std.array;
 import std.container.array;
 import std.exception;
 import std.file;
 import std.stdio;
+import std.typecons;
+import treerender.geometry.mesh;
 import treerender.math.v2;
 import treerender.math.v3;
 
-void loadObj(string file, out v3f[] outVerticies, out v2f[] outUvs, out v3f[] outNormals) {
+Mesh!NoData loadObj(string file) {
   writeln("Opening obj file ", file, "...");
 
-  auto vertexIndicies = Array!uint();
-  auto uvIndicies = Array!uint();
-  auto normalIndicies = Array!uint();
+  alias ti3 = Tuple!(uint, uint, uint);
+  auto vertexIndicies = Array!ti3();
+  auto uvIndicies =Array!ti3();
+  auto normalIndicies =Array!ti3();
 
   auto vertecies = Array!v3f();
   auto uvs = Array!v2f();
@@ -46,17 +49,9 @@ void loadObj(string file, out v3f[] outVerticies, out v2f[] outUvs, out v3f[] ou
         vertexIndex[2], uvIndex[2], normalIndex[2]);
       enforce(matches == 9, "Failed to read face of format %d/%d/%d %d/%d/%d %d/%d/%d");
 
-      vertexIndicies.insert(vertexIndex[0]);
-      vertexIndicies.insert(vertexIndex[1]);
-      vertexIndicies.insert(vertexIndex[2]);
-
-      uvIndicies.insert(uvIndex[0]);
-      uvIndicies.insert(uvIndex[1]);
-      uvIndicies.insert(uvIndex[2]);
-
-      normalIndicies.insert(normalIndex[0]);
-      normalIndicies.insert(normalIndex[1]);
-      normalIndicies.insert(normalIndex[2]);
+      vertexIndicies.insert(tuple(vertexIndex[0], vertexIndex[1], vertexIndex[2]));
+      uvIndicies.insert(tuple(uvIndex[0], uvIndex[1], uvIndex[2]));
+      normalIndicies.insert(tuple(normalIndex[0], normalIndex[1], normalIndex[2]));
     } else {
       // probably a comment, eat line
       f.readln();
@@ -66,20 +61,38 @@ void loadObj(string file, out v3f[] outVerticies, out v2f[] outUvs, out v3f[] ou
   auto unpackedVerticies = Array!v3f();
   auto unpackedUvs = Array!v2f();
   auto unpackedNormals = Array!v3f();
+  auto unpackedIndecies = Array!(PrimIndex!(Primitive.TRIANGLES))();
+  uint[ti3] index;
 
   // For each vertex of each triangle
+  uint j = 0;
   for(size_t i=0; i<vertexIndicies.length; i++) {
     // Get the indices of its attributes
     auto vertexIndex = vertexIndicies[i];
     auto uvIndex = uvIndicies[i];
     auto normalIndex = normalIndicies[i];
-    // Put the attributes in buffers
-    unpackedVerticies.insert(vertecies[vertexIndex-1]);
-    unpackedUvs.insert(uvs[uvIndex-1]);
-    unpackedNormals.insert(normals[normalIndex-1]);
+
+    // Calculate index
+    uint updateIndex(size_t k)(ti3 vi, ti3 ui, ti3 ni) {
+      auto key = tuple(vi[k], ui[k], ni[k]);
+      if(key in index) {
+        return index[key];
+      } else {
+        // Put the attributes in buffers
+        unpackedVerticies.insert(vertecies[vertexIndex[k] - 1]);
+        unpackedUvs.insert(uvs[uvIndex[k] - 1]);
+        unpackedNormals.insert(normals[normalIndex[k] - 1]);
+
+        index[key] = j;
+        j += 1;
+        return j-1;
+      }
+    }
+    auto k1 = updateIndex!0(vertexIndex, uvIndex, normalIndex);
+    auto k2 = updateIndex!1(vertexIndex, uvIndex, normalIndex);
+    auto k3 = updateIndex!2(vertexIndex, uvIndex, normalIndex);
+    unpackedIndecies.insert(PrimIndex!(Primitive.TRIANGLES)(k1, k2, k3));
   }
 
-  outVerticies = unpackedVerticies[].array;
-  outUvs = unpackedUvs[].array;
-  outNormals = unpackedNormals[].array;
+  return Mesh!NoData(unpackedVerticies, unpackedNormals, unpackedUvs, Array!NoData(), unpackedIndecies);
 }
