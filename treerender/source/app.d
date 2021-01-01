@@ -5,6 +5,7 @@ import std.math;
 import std.stdio;
 
 import treerender.geometry.loader.obj;
+import treerender.geometry.cube;
 import treerender.input;
 import treerender.math;
 import treerender.render;
@@ -147,7 +148,8 @@ void main()
 	scope(exit) glDeleteTextures(1, &texture);
 	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
 
-	auto mesh = loadObj("./assets/model/suzanne.obj");
+	// auto mesh = loadObj("./assets/model/suzanne.obj");
+	auto mesh = makeCube();
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");

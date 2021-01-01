@@ -27,7 +27,7 @@ Mesh!NoData makeCube() {
   mesh.insertTriangle(v3u(8, 9, 10));
   mesh.insertTriangle(v3u(9, 11, 10));
 
-  mesh.insertVertex(v3f( 1, -1, -1), v3f( 1,  0, 0), v2f(0.749279, 0.501284), NoData());
+  mesh.insertVertex(v3f( 1, -1, -1), v3f( 1,  0, 0), v2f(0.748573, 0.750412), NoData());
   mesh.insertVertex(v3f( 1,  1, -1), v3f( 1,  0, 0), v2f(0.749279, 0.501284), NoData());
   mesh.insertVertex(v3f( 1, -1,  1), v3f( 1,  0, 0), v2f(0.499422, 0.500239), NoData());
   mesh.insertVertex(v3f( 1,  1,  1), v3f( 1,  0, 0), v2f(0.500149, 0.750166), NoData());
