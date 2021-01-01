@@ -1,6 +1,7 @@
 module treerender.render.shader;
 
 import bindbc.opengl;
+import std.exception;
 import std.experimental.allocator;
 import std.experimental.allocator.showcase;
 import std.file;
@@ -34,6 +35,7 @@ GLuint loadShaders(string vertexFile, string fragmentFile) {
     scope(exit) stackAllocator.dispose(errorMsgC);
     glGetShaderInfoLog(vertexShaderId, infoLogLength, null, &errorMsgC[0]);
     writeln(errorMsgC[0 .. $-1]);
+    enforce(false, "Failed to compile vertex shader");
   }
 
   writeln("Compiling fragment shader ", fragmentFile);
@@ -48,6 +50,7 @@ GLuint loadShaders(string vertexFile, string fragmentFile) {
     scope(exit) stackAllocator.dispose(errorMsgC);
     glGetShaderInfoLog(fragmentShaderId, infoLogLength, null, &errorMsgC[0]);
     writeln(errorMsgC[0 .. $-1]);
+    enforce(false, "Failed to compile fragment shader");
   }
 
   writeln("Linking shader program...");
@@ -56,6 +59,7 @@ GLuint loadShaders(string vertexFile, string fragmentFile) {
   scope(exit) glDetachShader(programId, vertexShaderId);
   glAttachShader(programId, fragmentShaderId);
   scope(exit) glDetachShader(programId, fragmentShaderId);
+  glLinkProgram(programId);
 
   glGetProgramiv(programId, GL_LINK_STATUS, &result);
   glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &infoLogLength);
@@ -64,6 +68,7 @@ GLuint loadShaders(string vertexFile, string fragmentFile) {
     scope(exit) stackAllocator.dispose(errorMsgC);
     glGetProgramInfoLog(programId, infoLogLength, null, &errorMsgC[0]);
     writeln(errorMsgC[0 .. $-1]);
+    enforce(false, "Failed to link shader");
   }
 
   return programId;

@@ -1,8 +1,9 @@
 module treerender.math.v3;
 
-import treerender.math.trigonometry;
 import std.math;
 import std.random;
+import std.traits;
+import treerender.math.trigonometry;
 
 /// Shorthand for floating vector
 alias v3f = vec3!float;
@@ -62,8 +63,8 @@ struct vec3(T) {
     return vec3!T(x, y, z);
   }
 
-  static if(__traits(isFloating, T)) {
-    /// Return normalized vector with unit length
+  /// Return normalized vector with unit length
+  static if(isFloatingPoint!T) {
     vec3!T normalized() inout {
       return scale(1 / length);
     }
@@ -79,8 +80,16 @@ struct vec3(T) {
     return dot(this);
   }
 
-  //// Calculate dot product with other vector
+  /// Calculate dot product with other vector
   T dot(vec3!T v) inout {
     return x * v.x + y * v.y + z * v.z;
+  }
+
+  /// Calculate cross product between two vectors
+  vec3!T cross(vec3!T v) inout {
+    immutable vx = y*v.z - v.y*z;
+		immutable vy = v.x*z - x*v.z;
+		immutable vz = x*v.y - v.x*y;
+    return vec3!T(vx, vy, vz);
   }
 }

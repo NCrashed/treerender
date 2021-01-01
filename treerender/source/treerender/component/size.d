@@ -31,6 +31,6 @@ struct WindowSize {
 
   /// Calculate aspect ratio of window
   float aspect() inout {
-    return cast(float)v.x / cast(float)v.y;
+    return cast(float)v.y / cast(float)v.x;
   }
 }

@@ -124,7 +124,7 @@ void main()
 	int w,h;
 	SDL_GetWindowSize(window, &w, &h);
 	glViewport(0, 0, w, h);
-	glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.212f, 0.0f);
 
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
@@ -184,7 +184,7 @@ void main()
 	glUseProgram(programId);
 	GLuint lightId = glGetUniformLocation(programId, "LightPosition_worldspace");
 
-
+	float angle = 0;
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
 		quit = processEvents(input_events, world.storages.windowSize.global);
@@ -197,16 +197,16 @@ void main()
 		glUseProgram(programId);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		const projMat = projection(PI/6, world.storages.windowSize.global.aspect, 0.01, 1000);
-		auto viewMatrix = getViewMatrix();
-		auto modelMatrix = mat4.identity;
-		auto mvp = projMat * viewMatrix * modelMatrix;
+		const mat4 projMat = projection!float(PI/3, world.storages.windowSize.global.aspect, 0.001, 100);
+		const mat4 viewMatrix = lookAtMatrix!float(v3f(5, 1, 5), v3f(0, 0, 0), v3f(0, 1, 0));
+		const mat4 modelMatrix = quatf.fromAxis(v3f(1, 1, 0), angle).toMatrix;
+		const mat4 mvp = projMat * viewMatrix * modelMatrix;
 
 		// Send our transformation to the currently bound shader,
 		// in the "MVP" uniform
-		glUniformMatrix4fv(matrixId, 1, GL_FALSE, mvp.data.ptr);
-		glUniformMatrix4fv(modelMatrixId, 1, GL_FALSE, modelMatrix.data.ptr);
-		glUniformMatrix4fv(viewMatrixId, 1, GL_FALSE, viewMatrix.data.ptr);
+		glUniformMatrix4fv(matrixId, 1, GL_TRUE, mvp.data.ptr);
+		glUniformMatrix4fv(modelMatrixId, 1, GL_TRUE, modelMatrix.data.ptr);
+		glUniformMatrix4fv(viewMatrixId, 1, GL_TRUE, viewMatrix.data.ptr);
 
 		auto lightPos = v3f(4,4,4);
 		glUniform3f(lightId, lightPos.x, lightPos.y, lightPos.z);
@@ -256,16 +256,18 @@ void main()
 		// Draw the triangles !
 		glDrawArrays(GL_TRIANGLES, 0, cast(int)vertices.length);
 
+		SDL_GL_SwapWindow(window);
+
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
-
-		SDL_GL_SwapWindow(window);
 
 		immutable t2 = MonoTime.currTime();
 		immutable dt = cast(float)(t2 - t1).total!"usecs"() / 1000_000;
 		world.step(dt, input_events);
 		world.maintain();
+
+		angle += dt;
 
 		immutable fps = 1 / dt;
 		i += 1;

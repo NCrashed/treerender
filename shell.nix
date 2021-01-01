@@ -24,5 +24,6 @@ stdenv.mkDerivation rec {
     kdeApplications.kcachegrind
     pkg-config
     libGL
+    renderdoc
   ];
 }

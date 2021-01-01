@@ -1,8 +1,9 @@
 module treerender.math.v2;
 
-import treerender.math.trigonometry;
 import std.math;
 import std.random;
+import std.traits;
+import treerender.math.trigonometry;
 
 /// Shorthand for floating vector
 alias v2f = vec2!float;
@@ -15,9 +16,8 @@ struct vec2(T) {
   T y;
 
   /// Get unit vector corresponding to the angle in radians
-  static if(__traits(isFloating, T)) {
-    static vec2!T fromAngle(float angle)
-    {
+  static if(isFloatingPoint!T) {
+    static vec2!T fromAngle(float angle) {
       return vec2!T(cos(angle), sin(angle));
     }
   }
@@ -44,7 +44,7 @@ struct vec2(T) {
   }
 
   /// Define rotation around 0 to given angle
-  static if(__traits(isFloating, T)) {
+  static if(isFloatingPoint!T) {
     vec2!T rotate(T angle) inout {
       float sina = void;
       float cosa = void;
