@@ -1,7 +1,8 @@
 module treerender.math.matrix;
 
-import std.range;
 import std.algorithm;
+import std.math;
+import std.range;
 
 alias mat3 = Matrix!(float, 3, 3, 0);
 alias mat4 = Matrix!(float, 4, 4, 0);
@@ -63,4 +64,18 @@ struct Matrix(T, size_t n, size_t m = n, T initval = T.init) {
   private static size_t toIndex(size_t row, size_t col) {
     return row * m + col;
   }
+
+}
+
+/// Get perspective projection matrix that maps camera coordinate space into window space.
+Matrix!(T, 4) projection(T)(T fovy, T aspect, T near, T far) {
+  const top = near * tan(fovy/2);
+  const right = top / aspect;
+  auto ret = Matrix!(T, 4).zeros;
+  ret[0,0] = near/right;
+  ret[1,1] = near/top;
+  ret[2,2] = -(far+near)/(far-near);
+  ret[2,3] = -2*far*near/(far-near);
+  ret[3,2] = -1;
+  return ret;
 }

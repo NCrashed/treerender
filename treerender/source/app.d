@@ -1,6 +1,7 @@
-import bindbc.sdl;
 import bindbc.opengl;
+import bindbc.sdl;
 import core.time;
+import std.math;
 import std.stdio;
 
 import treerender.input;
@@ -15,7 +16,7 @@ import treerender.render;
 import loader = bindbc.loader.sharedlib;
 
 /// Iterate through user input and window events
-bool process_events(ref InputEvents events, ref v2i viewport) {
+bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 	SDL_Event event = void;
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
@@ -39,12 +40,12 @@ bool process_events(ref InputEvents events, ref v2i viewport) {
 			} break;
 			case SDL_WINDOWEVENT: switch (event.window.event) {
 				case SDL_WINDOWEVENT_RESIZED:
-					viewport.x = event.window.data1;
-					viewport.y = event.window.data2;
+					viewport.width = event.window.data1;
+					viewport.height = event.window.data2;
 					break;
 				case SDL_WINDOWEVENT_SIZE_CHANGED:
-					viewport.x = event.window.data1;
-					viewport.y = event.window.data2;
+					viewport.width = event.window.data1;
+					viewport.height = event.window.data2;
 					break;
 				default: {}
 			} break;
@@ -92,9 +93,9 @@ void main()
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-	auto window_size = v2i(1480, 1024);
+	auto winSize = WindowSize(v2i(1480, 1024));
 	const windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN; // SDL_WINDOW_RESIZABLE
-	auto window = SDL_CreateWindow("No existonce", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.x, window_size.y, windowFlags);
+	auto window = SDL_CreateWindow("No existonce", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, winSize.width, winSize.height, windowFlags);
 	if (!window) {
 		SDL_Log("SDL window creation error: %s\n", SDL_GetError());
 		return;
@@ -152,6 +153,7 @@ void main()
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
+	world.storages.windowSize.global = winSize;
 
 	auto fps_file = File("fps.out", "w");
 	auto i = 1;
@@ -182,9 +184,10 @@ void main()
 	glUseProgram(programId);
 	GLuint lightId = glGetUniformLocation(programId, "LightPosition_worldspace");
 
+
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
-		quit = process_events(input_events, window_size);
+		quit = processEvents(input_events, world.storages.windowSize.global);
 
 		// world.render();
 		// Clear the screen
@@ -194,10 +197,10 @@ void main()
 		glUseProgram(programId);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		auto projectionMatrix = getProjectionMatrix();
+		const projMat = projection(PI/6, world.storages.windowSize.global.aspect, 0.01, 1000);
 		auto viewMatrix = getViewMatrix();
 		auto modelMatrix = mat4.identity;
-		auto mvp = projectionMatrix * viewMatrix * modelMatrix;
+		auto mvp = projMat * viewMatrix * modelMatrix;
 
 		// Send our transformation to the currently bound shader,
 		// in the "MVP" uniform

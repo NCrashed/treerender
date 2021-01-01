@@ -2,6 +2,7 @@ module treerender.component;
 
 public import treerender.component.delta;
 public import treerender.component.rand;
+public import treerender.component.size;
 
 public import decs;
 
@@ -9,4 +10,5 @@ public import decs;
 mixin DeclareComponents!(
   Rng,
   DeltaTime,
+  WindowSize,
   );
