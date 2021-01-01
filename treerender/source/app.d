@@ -149,7 +149,7 @@ void main()
 	v3f[] vertices;
 	v2f[] uvs;
 	v3f[] normals;
-	loadObj("./assets/model/cube.obj", vertices, uvs, normals);
+	loadObj("./assets/model/suzanne.obj", vertices, uvs, normals);
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
