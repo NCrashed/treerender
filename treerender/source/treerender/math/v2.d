@@ -46,14 +46,9 @@ struct vec2(T) {
   /// Define rotation around 0 to given angle
   static if(__traits(isFloating, T)) {
     vec2!T rotate(T angle) inout {
-      static if(__traits(isSame, T, float)) {
-        float sina = void;
-        float cosa = void;
-        sincos(angle, sina, cosa);
-      } else {
-        immutable sina = sin(angle);
-        immutable cosa = cos(angle);
-      }
+      float sina = void;
+      float cosa = void;
+      sinCos(angle, sina, cosa);
       immutable x = this.x * cosa - this.y * sina;
       immutable y = this.x * sina + this.y * cosa;
       return vec2!T(x, y);

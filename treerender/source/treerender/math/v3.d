@@ -61,4 +61,26 @@ struct vec3(T) {
     immutable z = this.z * scalar;
     return vec3!T(x, y, z);
   }
+
+  static if(__traits(isFloating, T)) {
+    /// Return normalized vector with unit length
+    vec3!T normalized() inout {
+      return scale(1 / length);
+    }
+
+    /// Calclulate length of vector
+    T length() inout {
+      return lengthSquared.sqrt;
+    }
+  }
+
+  /// Calclulate square of length of vector (doesn't involve complex sqrt op)
+  T lengthSquared() inout {
+    return dot(this);
+  }
+
+  //// Calculate dot product with other vector
+  T dot(vec3!T v) inout {
+    return x * v.x + y * v.y + z * v.z;
+  }
 }
