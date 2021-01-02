@@ -6,25 +6,25 @@ import treerender.math.v3;
 
 /// Primitive types that are located inside mesh
 enum Primitive {
-  TRIANGLES,
-  LINES,
+  triangles,
+  lines,
 }
 
 /// Amount of indices in primitive
 size_t primitiveParts(Primitive p) {
   final switch(p) {
-    case Primitive.TRIANGLES: return 3;
-    case Primitive.LINES: return 2;
+    case Primitive.triangles: return 3;
+    case Primitive.lines: return 2;
   }
 }
 
 /// Encapsulates indices that are required to define a one instance of primitive
 struct PrimIndex(Primitive prim) {
-  static if (prim == Primitive.TRIANGLES) {
+  static if (prim == Primitive.triangles) {
     uint start;
     uint middle;
     uint end;
-  } else static if (prim == Primitive.LINES) {
+  } else static if (prim == Primitive.lines) {
     uint start;
     uint end;
   }
@@ -34,7 +34,7 @@ struct PrimIndex(Primitive prim) {
 struct NoData {}
 
 /// Mes is set of triangles with attached data to each vertex.
-struct Mesh(T, Primitive primitive = Primitive.TRIANGLES) {
+struct Mesh(T, Primitive primitive = Primitive.triangles) {
   /// All vertecies of mesh
   Array!v3f vertices;
   /// Normal vector of vertecies, each vertex has corresponding normal.
@@ -75,12 +75,12 @@ struct Mesh(T, Primitive primitive = Primitive.TRIANGLES) {
   }
 
   /// Write triangle indices to mesh
-  void insertTriangle()(v3u i) if(primitive == Primitive.TRIANGLES) {
+  void insertTriangle()(v3u i) if(primitive == Primitive.triangles) {
     indices.insert(PrimIndex!primitive(i.x, i.y, i.z));
   }
 
   /// Write triangle indices to mesh
-  void insertLine()(v2u i) if(primitive == Primitive.LINES) {
+  void insertLine()(v2u i) if(primitive == Primitive.lines) {
     indices.insert(PrimIndex!primitive(i.x, i.y));
   }
 }
@@ -92,7 +92,7 @@ unittest {
   test.insertTriangle(v3u(0, 1, 2));
 }
 unittest {
-  auto test = Mesh!(float, Primitive.LINES).allocate(100);
+  auto test = Mesh!(float, Primitive.lines).allocate(100);
   test.insertVertex(v3f(1.0, 1.0, 1.0), v3f(0.1, 0.1, 0.1), v2f(2.0, 2.0), 42.0);
   test.insertVertex(v3f(1.0, 1.0, 2.0), v3f(0.1, 0.1, 0.1), v2f(2.0, 2.0), 23.0);
   test.insertLine(v2u(0, 1));

@@ -76,6 +76,12 @@ struct vec2(T) {
     immutable y = this.y * scalar;
     return vec2!T(x, y);
   }
+
+  /// Calculate sign of each component and return vector with 1 with that sign.
+  /// *Note*: corner cases are 0 and NaN, they are returned as is.
+  vec2!T signum() inout {
+    return vec2!T(x.sgn, y.sgn);
+  }
 }
 
 unittest {

@@ -94,4 +94,10 @@ struct vec3(T) {
 		immutable vz = x*v.y - v.x*y;
     return vec3!T(vx, vy, vz);
   }
+
+  /// Calculate sign of each component and return vector with 1 with that sign.
+  /// *Note*: corner cases are 0 and NaN, they are returned as is.
+  vec3!T signum() inout {
+    return vec3!T(x.sgn, y.sgn, z.sgn);
+  }
 }
