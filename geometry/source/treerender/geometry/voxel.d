@@ -22,7 +22,7 @@ template isVoxel(V) {
         is(typeof(V.init) == V)
         && is(ReturnType!((V v) => V.empty) == V)
         && is(ReturnType!((V v) => v.opaque) == bool)
-        && hasFunctionAttributes!(V.opaque, "inout");  
+        && hasFunctionAttributes!(V.opaque, "inout");
 }
 
 unittest {
@@ -83,7 +83,7 @@ struct Voxels(T, size_t n) if(isVoxel!T) {
   static This replicate(T val) {
     T[length] data;
     data[] = val;
-    return This(data);
+    return This(cast(T[n][n][n])data);
   }
 
   /// Check that given index in bounds of voxel grid

@@ -4,8 +4,12 @@ import core.time;
 import std.math;
 import std.stdio;
 
-import treerender.geometry.loader.obj;
+import treerender.geometry.color;
 import treerender.geometry.cube;
+import treerender.geometry.greedy;
+import treerender.geometry.loader.obj;
+import treerender.geometry.mesh;
+import treerender.geometry.voxel;
 import treerender.input;
 import treerender.math;
 import treerender.render;
@@ -149,7 +153,9 @@ void main()
 	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
 
 	// auto mesh = loadObj("./assets/model/suzanne.obj");
-	auto mesh = makeCube();
+	// auto mesh = makeCube();
+	auto grid = Voxels!(Color, 2).replicate(Color.red);
+	auto mesh = grid.greedyTriangulate!(Primitive.triangles);
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
