@@ -1,7 +1,8 @@
 module treerender.geometry.side;
 
-import treerender.math.v3;
 import std.typecons;
+import treerender.geometry.axis;
+import treerender.math.v3;
 
 /// Encoding of one of 6 directions of faces of cube
 enum Side {
@@ -46,5 +47,34 @@ Side oppositeSide(Side side) {
     case Side.left:     return Side.right;
     case Side.up:       return Side.down;
     case Side.down:     return Side.up;
+  }
+}
+
+/// Return `true` if given side facing negative direction
+bool sideNegative(Side side) {
+  final switch(side) {
+    case Side.forward:  return false;
+    case Side.backward: return true;
+    case Side.right:    return false;
+    case Side.left:     return true;
+    case Side.up:       return false;
+    case Side.down:     return true;
+  }
+}
+
+/// Return `true` if given side facing positive direction
+bool sidePositive(Side side) {
+  return !side.sideNegative;
+}
+
+/// Get axis of side
+Axis sideAxis(Side side) {
+  final switch(side) {
+    case Side.forward:  return Axis.x;
+    case Side.backward: return Axis.x;
+    case Side.right:    return Axis.y;
+    case Side.left:     return Axis.y;
+    case Side.up:       return Axis.z;
+    case Side.down:     return Axis.z;
   }
 }

@@ -42,6 +42,14 @@ struct vec3(T) {
     return vec3!T(x, y, z);
   }
 
+  /// Another way to scale or add or subtract scalar
+  vec3!T opBinaryRight(string op)(T scalar) inout {
+    immutable x = mixin("this.x " ~ op ~ " scalar");
+    immutable y = mixin("this.y " ~ op ~ " scalar");
+    immutable z = mixin("this.z " ~ op ~ " scalar");
+    return vec3!T(x, y, z);
+  }
+
   /// Compare per field two vectors with given precision (for floating point equality tests)
   bool approxEq(T epsilon = 0.000001)(vec3!T other) inout {
     return (this.x - other.x).abs <= epsilon

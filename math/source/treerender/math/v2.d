@@ -45,6 +45,14 @@ struct vec2(T) {
     return vec2!T(x, y);
   }
 
+  /// Another way to scale or add or subtract scalar
+  vec2!T opBinaryRight(string op)(T scalar) inout {
+    immutable x = mixin("this.x " ~ op ~ " scalar");
+    immutable y = mixin("this.y " ~ op ~ " scalar");
+    return vec2!T(x, y);
+  }
+
+
   /// Define rotation around 0 to given angle
   static if(isFloatingPoint!T) {
     vec2!T rotate(T angle) inout {

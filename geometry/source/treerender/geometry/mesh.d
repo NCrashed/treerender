@@ -66,6 +66,11 @@ struct Mesh(T, Primitive primitive = Primitive.triangles) {
       );
   }
 
+  /// Get next free index value for vertex
+  uint currentIndex() inout {
+    return cast(uint)vertices.length;
+  }
+
   /// Write single vertex into mesh
   void insertVertex(v3f position, v3f normal, v2f uv, T value) {
     vertices.insert(position);
