@@ -15,3 +15,4 @@ decs-test-*
 *.lst
 *.a
 *.so
+*test-library

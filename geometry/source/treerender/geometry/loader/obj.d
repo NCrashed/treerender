@@ -61,7 +61,7 @@ Mesh!NoData loadObj(string file) {
   auto unpackedVerticies = Array!v3f();
   auto unpackedUvs = Array!v2f();
   auto unpackedNormals = Array!v3f();
-  auto unpackedIndecies = Array!(PrimIndex!(Primitive.TRIANGLES))();
+  auto unpackedIndecies = Array!(PrimIndex!(Primitive.triangles))();
   uint[ti3] index;
 
   // For each vertex of each triangle
@@ -91,7 +91,7 @@ Mesh!NoData loadObj(string file) {
     auto k1 = updateIndex!0(vertexIndex, uvIndex, normalIndex);
     auto k2 = updateIndex!1(vertexIndex, uvIndex, normalIndex);
     auto k3 = updateIndex!2(vertexIndex, uvIndex, normalIndex);
-    unpackedIndecies.insert(PrimIndex!(Primitive.TRIANGLES)(k1, k2, k3));
+    unpackedIndecies.insert(PrimIndex!(Primitive.triangles)(k1, k2, k3));
   }
 
   return Mesh!NoData(unpackedVerticies, unpackedNormals, unpackedUvs, Array!NoData(), unpackedIndecies);

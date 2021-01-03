@@ -95,9 +95,19 @@ struct vec3(T) {
     return vec3!T(vx, vy, vz);
   }
 
-  /// Calculate sign of each component and return vector with 1 with that sign.
-  /// *Note*: corner cases are 0 and NaN, they are returned as is.
-  vec3!T signum() inout {
-    return vec3!T(x.sgn, y.sgn, z.sgn);
+  static if(isFloatingPoint!T || isIntegral!T) {
+    /// Calculate sign of each component and return vector with 1 with that sign.
+    /// *Note*: corner cases are 0 and NaN, they are returned as is.
+    vec3!T signum() inout {
+      return vec3!T(x.sgn, y.sgn, z.sgn);
+    }
   }
+
+  /// Cast by elements vector to another vector
+  V opCast(V)() inout if (is(V: vec3!U, U)) {
+    static if(is(V: vec3!U, U)) { // template constraint in function declaration doesn't bring in scope U, so bring it with static if
+      return vec3!U(cast(U)x, cast(U)y, cast(U)z);
+    }
+  }
+
 }
