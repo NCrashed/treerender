@@ -43,14 +43,6 @@ void insertCubeSide(Side s, Primitive p, size_t n, T)(Mesh!T mesh, v3u pos, v2u 
     const p3 = v3f(xn, norm(pos.y + h), zn);
   }
 
-  import std.stdio;
-  writeln(s);
-  writeln(normal);
-  writeln(p0);
-  writeln(p1);
-  writeln(p2);
-  writeln(p3);
-
   const u0 = v2f(0, cast(float)h);
   const u1 = v2f(cast(float)w, cast(float)h);
   const u2 = v2f(cast(float)w, 0);

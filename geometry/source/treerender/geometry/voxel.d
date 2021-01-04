@@ -1,5 +1,6 @@
 module treerender.geometry.voxel;
 
+import std.conv;
 import std.traits;
 import treerender.geometry.axis;
 import treerender.geometry.side;
@@ -108,7 +109,7 @@ struct Voxels(T, size_t n) if(isVoxel!T) {
     T[n][n] data;
     foreach(j; 0..n) {
       foreach(k; 0..n) {
-        data[k][j] = get(a.along(i));
+        data[k][j] = get(a.axisSlice(cast(uint)j, cast(uint)k, i));
       }
     }
     return data;
@@ -121,6 +122,22 @@ struct Voxels(T, size_t n) if(isVoxel!T) {
     if(!inBounds(j)) return true;
     const a = get(i);
     const b = get(j);
-    return a != T.empty && (b == T.empty || !b.opaque);
+    return a != T.empty && (b == T.empty || b.opaque);
+  }
+
+  /// Allows to use [x, y, z]
+  T opIndex(size_t x, size_t y, size_t z) {
+    assert(x < n, "Voxel x " ~ x.to!string ~ " offset is out of bounds " ~ size.stringof);
+    assert(y < n, "Voxel y " ~ y.to!string ~ " offset is out of bounds " ~ size.stringof);
+    assert(z < n, "Voxel z " ~ z.to!string ~ " offset is out of bounds " ~ size.stringof);
+    return data[z][y][x];
+  }
+
+  /// Allows to use [x, y, z] assign
+  void opIndexAssign(T value, size_t x, size_t y, size_t z) {
+    assert(x < n, "Voxel x " ~ x.to!string ~ " offset is out of bounds " ~ size.stringof);
+    assert(y < n, "Voxel y " ~ y.to!string ~ " offset is out of bounds " ~ size.stringof);
+    assert(z < n, "Voxel z " ~ z.to!string ~ " offset is out of bounds " ~ size.stringof);
+    data[z][y][x] = value;
   }
 }

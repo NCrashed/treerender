@@ -41,6 +41,7 @@ private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!T m
       const value = grid.get(vi);
       const masked = mask[k][j];
       if(masked != T.empty && grid.sideVisible(vi, s)) {
+        import std.stdio;
         v2u peekQuad(size_t ji, size_t w, size_t h) {
           if(k + h >= n) return v2u(cast(uint)w, cast(uint)h);
           else if(j + ji >= n) return peekQuad(0, ji, h+1);
@@ -63,7 +64,10 @@ private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!T m
             }
           }
         }
+        writeln(mask);
         auto size = peekQuad(1, 0, 0);
+        writeln(mask);
+        writeln(vi, " => ", size, " ", s);
         mesh.insertCubeSide!(s, p, n)(vi, size, value);
       }
     }
