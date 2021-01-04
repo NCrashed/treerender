@@ -186,6 +186,12 @@ void main()
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, mesh.normals.length * v3f.sizeof, &mesh.normals[0], GL_STATIC_DRAW);
 
+	GLuint colorbuffer;
+	glGenBuffers(1, &colorbuffer);
+	scope(exit) glDeleteBuffers(1, &colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, mesh.data.length * mesh.Data.sizeof, &mesh.data[0], GL_STATIC_DRAW);
+
 	// Generate a buffer for the indices as well
 	GLuint elementbuffer;
 	glGenBuffers(1, &elementbuffer);
@@ -266,6 +272,18 @@ void main()
 			null                              // array buffer offset
 		);
 
+		// 4rd attribute buffer : colors
+		glEnableVertexAttribArray(3);
+		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+		glVertexAttribPointer(
+			3,                                // attribute
+			4,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			null                              // array buffer offset
+		);
+
 		// Index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 
@@ -282,6 +300,7 @@ void main()
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(3);
 
 		immutable t2 = MonoTime.currTime();
 		immutable dt = cast(float)(t2 - t1).total!"usecs"() / 1000_000;

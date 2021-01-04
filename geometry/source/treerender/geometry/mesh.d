@@ -49,6 +49,9 @@ struct Mesh(T, Primitive primitive = Primitive.triangles) {
   /// Alias to self
   alias This = Mesh!(T, primitive);
 
+  /// Alias to data element
+  alias Data = T;
+
   /// Allocate mesh for given amount of primitives
   static This allocate(size_t n) {
     Array!T prealloc(T)(size_t i) {
