@@ -34,7 +34,7 @@ struct PrimIndex(Primitive prim) {
 struct NoData {}
 
 /// Mes is set of triangles with attached data to each vertex.
-struct Mesh(T, Primitive primitive = Primitive.triangles) {
+struct Mesh(T, Primitive prim = Primitive.triangles) {
   /// All vertecies of mesh
   Array!v3f vertices;
   /// Normal vector of vertecies, each vertex has corresponding normal.
@@ -51,6 +51,8 @@ struct Mesh(T, Primitive primitive = Primitive.triangles) {
 
   /// Alias to data element
   alias Data = T;
+  /// Alias for primitive visible outside
+  enum primitive = prim;
 
   /// Allocate mesh for given amount of primitives
   static This allocate(size_t n) {

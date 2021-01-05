@@ -9,10 +9,10 @@ import treerender.math.v2;
 import treerender.math.v3;
 
 /// Convert each voxel into triangle mesh using greedy meshing algorithm.
-Mesh!T greedyTriangulate(Primitive p, T, size_t n)(Voxels!(T, n) grid) {
+Mesh!(T, p) greedyTriangulate(Primitive p, T, size_t n)(Voxels!(T, n) grid) {
   // Estimate as each voxel will have a two triangles in average
   enum prealloc = 2 * n * n * n;
-  auto mesh = Mesh!T.allocate(prealloc);
+  auto mesh = Mesh!(T, p).allocate(prealloc);
   static foreach(i; 0 .. n) {
     mesh.triangulateSlice!(p, Axis.x, Side.backward)(grid, i);
     mesh.triangulateSlice!(p, Axis.x, Side.forward)(grid, i);
@@ -33,7 +33,7 @@ unittest {
   auto mesh = grid.greedyTriangulate!(Primitive.triangles);
 }
 
-private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!T mesh, Voxels!(T, n) grid, uint i) {
+private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!(T, p) mesh, Voxels!(T, n) grid, uint i) {
   auto mask = grid.slice!a(i);
   foreach(j; 0..n) {
     foreach(k; 0..n) {
@@ -41,7 +41,6 @@ private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!T m
       const value = grid.get(vi);
       const masked = mask[k][j];
       if(masked != T.empty && grid.sideVisible(vi, s)) {
-        import std.stdio;
         v2u peekQuad(size_t ji, size_t w, size_t h) {
           if(k + h >= n) return v2u(cast(uint)w, cast(uint)h);
           else if(j + ji >= n) return peekQuad(0, ji, h+1);
@@ -59,15 +58,21 @@ private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!T m
                 return peekQuad(0, ji, h+1);
               }
             } else {
-              mask[newk][newj] = T.empty;
               return peekQuad(ji+1, w, h);
             }
           }
         }
-        writeln(mask);
+        void zeroMask(v2u size) {
+          foreach(sx; 0 .. size.x) {
+            foreach(sy; 0 .. size.y) {
+              const v = a.removeAxis(vi);
+              mask[v.y + sy][v.x + sx] = T.empty;
+            }
+          }
+        }
+
         auto size = peekQuad(1, 0, 0);
-        writeln(mask);
-        writeln(vi, " => ", size, " ", s);
+        zeroMask(size);
         mesh.insertCubeSide!(s, p, n)(vi, size, value);
       }
     }

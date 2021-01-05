@@ -95,3 +95,12 @@ Matrix!(T, 4) lookAtMatrix(T)(vec3!T eye, vec3!T at, vec3!T up) {
 	ret[3,0] = 0.0f;            ret[3,1] = 0.0f;            ret[3,2] = 0.0f;            ret[3,3] = 1.0f;
   return ret;
 }
+
+/// Get translation matrix to translate objects across given vector
+Matrix!(T, 4) translation(T)(vec3!T v) {
+  auto ret = Matrix!(T, 4).identity;
+  ret[0,3] = v.x;
+	ret[1,3] = v.y;
+	ret[2,3] = v.z;
+  return ret;
+}

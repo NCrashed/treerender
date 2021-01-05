@@ -154,9 +154,11 @@ void main()
 
 	// auto mesh = loadObj("./assets/model/suzanne.obj");
 	// auto mesh = makeCube();
-	auto grid = Voxels!(Color, 2).replicate(Color.red);
+	auto grid = Voxels!(Color, 4).replicate(Color.red);
+	grid[1, 1, 0] = Color.empty;
 	grid[0, 0, 1] = Color.green;
 	grid[1, 1, 1] = Color.blue;
+	grid[0, 1, 1] = Color.empty;
 	auto mesh = grid.greedyTriangulate!(Primitive.triangles);
 
 	// Here we define which components are supported by the world
@@ -219,8 +221,8 @@ void main()
 
 		// Compute the MVP matrix from keyboard and mouse input
 		const mat4 projMat = projection!float(PI/3, world.storages.windowSize.global.aspect, 0.001, 100);
-		const mat4 viewMatrix = lookAtMatrix!float(v3f(5, 5, 1), v3f(0, 0, 0), v3f(0, 0, 1));
-		const mat4 modelMatrix = quatf.fromAxis(v3f(1, 1, 0), angle).toMatrix;
+		const mat4 viewMatrix = lookAtMatrix!float(v3f(-1, -1, 2), v3f(0, 0, 0), v3f(0, 0, 1));
+		const mat4 modelMatrix = quatf.fromAxis(v3f(-1, -1, -1), angle).toMatrix * translation(v3f(-0.5, -0.5, -0.5));
 		const mat4 mvp = projMat * viewMatrix * modelMatrix;
 
 		// Send our transformation to the currently bound shader,
@@ -229,7 +231,7 @@ void main()
 		glUniformMatrix4fv(modelMatrixId, 1, GL_TRUE, modelMatrix.data.ptr);
 		glUniformMatrix4fv(viewMatrixId, 1, GL_TRUE, viewMatrix.data.ptr);
 
-		auto lightPos = v3f(4,4,4);
+		auto lightPos = v3f(-4,-4,4);
 		glUniform3f(lightId, lightPos.x, lightPos.y, lightPos.z);
 
 		// Bind our texture in Texture Unit 0
@@ -290,12 +292,26 @@ void main()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 
 		// Draw the triangles !
-		glDrawElements(
-			GL_TRIANGLES,                         // mode
-			3 * cast(uint)mesh.indices.length,    // count
-			GL_UNSIGNED_INT,                      // type
-			null                                  // element array buffer offset
-		);
+		final switch(mesh.primitive) {
+			case(Primitive.triangles): {
+				glDrawElements(
+					GL_TRIANGLES,                         // mode
+					3 * cast(uint)mesh.indices.length,    // count
+					GL_UNSIGNED_INT,                      // type
+					null                                  // element array buffer offset
+				);
+				break;
+			}
+			case(Primitive.lines): {
+				glDrawElements(
+					GL_LINES,                             // mode
+					2 * cast(uint)mesh.indices.length,    // count
+					GL_UNSIGNED_INT,                      // type
+					null                                  // element array buffer offset
+				);
+				break;
+			}
+		}
 
 		SDL_GL_SwapWindow(window);
 
