@@ -41,6 +41,14 @@ struct Camera {
   mat4 view() inout {
     return pos.translation * rot.matrix;
   }
+
+  /// Construct new camera that looks at given location
+  Camera lookAt(v3f eye, v3f target, v3f up) inout {
+    Camera ret = this;
+    ret.pos = eye;
+    ret.rot = quatf.lookAt(eye, target, up);
+    return ret;
+  }
 }
 
 /// Tag that given entity has camera which should be used for rendering.

@@ -118,4 +118,13 @@ struct vec3(T) {
     }
   }
 
+  /// Project given vector to the `v`
+  vec3!T project(vec3!T v) inout {
+    return v * (dot(v) / v.lengthSquared);
+  }
+
+  /// Get perpendicular component between given vector and `v`
+  vec3!T reject(vec3!T v) inout {
+    return this - project(v);
+  }
 }

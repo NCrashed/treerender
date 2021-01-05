@@ -41,6 +41,16 @@ struct Quaternion(T) {
     return This(x, y, z, w);
   }
 
+  /// Make rotation for object located in `source` to position `dest`
+  /// Vector `up` is used as z axis.
+  static This lookAt(vec3!T source, vec3!T dest, vec3!T up) {
+    const forward = (dest - source).normalized;
+    const xaxis = vec3!T(1.0, 0, 0).reject(up);
+    const cosa = xaxis.dot(forward);
+    const angle = acos(cosa);
+    return This.fromAxis(up, angle);
+  }
+
   /// Convert quaternion to rotation matrix
   Matrix!(T, 4) matrix() inout {
     auto ret = Matrix!(T, 4).zeros;
