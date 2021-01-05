@@ -149,10 +149,6 @@ void main()
 	auto viewMatrixId = glGetUniformLocation(programId, "V");
 	auto modelMatrixId = glGetUniformLocation(programId, "M");
 
-	auto texture = loadTexture("./assets/texture/test.jpg");
-	scope(exit) glDeleteTextures(1, &texture);
-	auto textureId = glGetUniformLocation(programId, "myTextureSampler");
-
 	// auto mesh = loadObj("./assets/model/suzanne.obj");
 	// auto mesh = makeCube();
 	enum gridSize = 32;
@@ -238,12 +234,6 @@ void main()
 
 		auto lightPos = v3f(-4,-4,4);
 		glUniform3f(lightId, lightPos.x, lightPos.y, lightPos.z);
-
-		// Bind our texture in Texture Unit 0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		// Set our "myTextureSampler" sampler to use Texture Unit 0
-		glUniform1i(textureId, 0);
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
