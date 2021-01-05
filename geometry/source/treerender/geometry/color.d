@@ -1,5 +1,6 @@
 module treerender.geometry.color;
 
+import std.random;
 import treerender.math.v4;
 
 /// The simpliest RGBA color with [0 .. 1] range
@@ -25,6 +26,14 @@ struct Color {
   /// Constant blue color
   static Color blue() {
     return Color(0.0, 0.0, 1.0, 1.0);
+  }
+
+  /// Return random non transparent color
+  static Color randomSolid() {
+    auto r = uniform(0.0, 1.0);
+    auto g = uniform(0.0, 1.0);
+    auto b = uniform(0.0, 1.0);
+    return Color(r, g, b, 1.0);
   }
 
   /// Return `true` if the voxel is transparent

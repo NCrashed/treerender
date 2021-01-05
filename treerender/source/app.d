@@ -3,6 +3,7 @@ import bindbc.sdl;
 import core.time;
 import std.math;
 import std.stdio;
+import std.random;
 
 import treerender.geometry.color;
 import treerender.geometry.cube;
@@ -154,11 +155,15 @@ void main()
 
 	// auto mesh = loadObj("./assets/model/suzanne.obj");
 	// auto mesh = makeCube();
-	auto grid = Voxels!(Color, 4).replicate(Color.red);
-	grid[1, 1, 0] = Color.empty;
-	grid[0, 0, 1] = Color.green;
-	grid[1, 1, 1] = Color.blue;
-	grid[0, 1, 1] = Color.empty;
+	enum gridSize = 32;
+	auto grid = Voxels!(Color, gridSize).replicate(Color.empty);
+	enum n = 30000;
+	foreach(i; 0..n) {
+		auto x = uniform(0, gridSize);
+		auto y = uniform(0, gridSize);
+		auto z = uniform(0, gridSize);
+		grid[x, y, z] = Color.red;
+	}
 	auto mesh = grid.greedyTriangulate!(Primitive.triangles);
 
 	// Here we define which components are supported by the world
@@ -221,7 +226,7 @@ void main()
 
 		// Compute the MVP matrix from keyboard and mouse input
 		const mat4 projMat = projection!float(PI/3, world.storages.windowSize.global.aspect, 0.001, 100);
-		const mat4 viewMatrix = lookAtMatrix!float(v3f(-1, -1, 2), v3f(0, 0, 0), v3f(0, 0, 1));
+		const mat4 viewMatrix = lookAtMatrix!float(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1));
 		const mat4 modelMatrix = quatf.fromAxis(v3f(-1, -1, -1), angle).toMatrix * translation(v3f(-0.5, -0.5, -0.5));
 		const mat4 mvp = projMat * viewMatrix * modelMatrix;
 
