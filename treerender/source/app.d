@@ -223,7 +223,7 @@ void main()
 		// Compute the MVP matrix from keyboard and mouse input
 		const mat4 projMat = projection!float(PI/3, world.storages.windowSize.global.aspect, 0.001, 100);
 		const mat4 viewMatrix = lookAtMatrix!float(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1));
-		const mat4 modelMatrix = quatf.fromAxis(v3f(-1, -1, -1), angle).toMatrix * translation(v3f(-0.5, -0.5, -0.5));
+		const mat4 modelMatrix = quatf.fromAxis(v3f(-1, -1, -1), angle).matrix * translation(v3f(-0.5, -0.5, -0.5));
 		const mat4 mvp = projMat * viewMatrix * modelMatrix;
 
 		// Send our transformation to the currently bound shader,

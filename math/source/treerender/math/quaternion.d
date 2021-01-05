@@ -42,7 +42,7 @@ struct Quaternion(T) {
   }
 
   /// Convert quaternion to rotation matrix
-  Matrix!(T, 4) toMatrix() inout {
+  Matrix!(T, 4) matrix() inout {
     auto ret = Matrix!(T, 4).zeros;
     T wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
     auto s  = 2 / length;
