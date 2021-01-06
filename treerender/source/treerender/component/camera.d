@@ -7,12 +7,88 @@ import treerender.math.matrix;
 import treerender.math.quaternion;
 import treerender.math.v3;
 
+/// Type of projections
+enum ProjType {
+  perspective
+, orthographic
+}
+
+/// Container that holds on of `Projection` type
+struct Projection {
+  ProjType tag;
+  union {
+    Perspective persp;
+    Orthographic ortho;
+  }
+
+  /// Make perspective projection in internal tagged union
+  static Projection makePerspective(float fovy, float aspect, float near, float far) {
+    Projection ret;
+    ret.tag = ProjType.perspective;
+    ret.persp = Perspective(fovy, aspect, near, far);
+    return ret;
+  }
+
+  /// Make orthographic projection in internal tagged union
+  static Projection makeOrthographic(float right, float aspect, float near, float far) {
+    Projection ret;
+    ret.tag = ProjType.orthographic;
+    ret.ortho = Orthographic(right, aspect, near, far);
+    return ret;
+  }
+
+  /// Get projection matrix for stored projection way
+  mat4 matrix() inout {
+    final switch(tag) {
+      case(ProjType.perspective): return persp.matrix;
+      case(ProjType.orthographic): return ortho.matrix;
+    }
+  }
+
+  /// Get aspect ratio
+  float aspect() inout {
+    return persp.aspect; // exploit that aspect is always second float
+  }
+
+  /// Set aspect ratio
+  void aspect(float v) {
+    persp.aspect = v; // exploit that aspect is always second float
+  }
+
+  private:
+
+  struct Perspective {
+    float fovy;
+    float aspect;
+    float near;
+    float far;
+
+    mat4 matrix() inout {
+      return projection!float(fovy, aspect, near, far);
+    }
+  }
+
+  struct Orthographic {
+    float right;
+    float aspect;
+    float near;
+    float far;
+
+    mat4 matrix() inout {
+      const left = -right;
+      const top = right * aspect;
+      const bottom = -top;
+      return orthographic!float(left, right, bottom, top, near, far);
+    }
+  }
+}
+
 /// Describes a view into game world. Contains translation, rotation and pespective
 /// information.
 struct Camera {
-  /// Projection matrix. Remaps camera space to rasterization space.
+  /// Projection info. Remaps camera space to rasterization space.
   /// Usually it is perspective matrix, can be ortho projection matrix.
-  mat4 proj;
+  Projection proj;
   /// Rotation of camera
   quatf rot;
   /// Position of camera
@@ -29,11 +105,21 @@ struct Camera {
   * @par near - distance to near clip plane from camera
   * @par far - distance to far clip plane from camera
   */
-  static Camera perspective(float fovy, float aspect, float near, float far) {
-    Camera cam;
-    cam.proj = projection!float(fovy, aspect, near, far);
-    cam.rot = quatf.fromAxis(v3f(0, 0, 1), 0);
-    cam.pos = v3f(0, 0, 0);
+  Camera perspective(float fovy, float aspect, float near, float far) inout {
+    Camera cam = this;
+    cam.proj = Projection.makePerspective(fovy, aspect, near, far);
+    return cam;
+  }
+
+  /** Make camera with orthographic projection
+  * @par right - half of width to the right
+  * @par aspect - height / width of viewport
+  * @par near - distance to near clip plane from camera
+  * @par far - distance to far clip plane from camera
+  */
+  Camera orthographic(float right, float aspect, float near, float far) inout {
+    Camera cam = this;
+    cam.proj = Projection.makeOrthographic(right, aspect, near, far);
     return cam;
   }
 

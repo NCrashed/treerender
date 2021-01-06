@@ -82,6 +82,19 @@ Matrix!(T, 4) projection(T)(T fovy, T aspect, T near, T far) {
   return ret;
 }
 
+/// Get perspective projection matrix that maps camera coordinate space into window space.
+Matrix!(T, 4) orthographic(T)(T left, T right, T bottom, T top, T near, T far) {
+  auto ret = Matrix!(T, 4).zeros;
+  ret[0,0] = 2/(right-left);
+  ret[1,1] = 2/(top-bottom);
+  ret[2,2] = -2/(far-near);
+  ret[3,3] = 1;
+  ret[3,0] = -(right+left)/(right-left);
+  ret[3,1] = -(top+bottom)/(top-bottom);
+  ret[3,1] = -(far+near)/(far-near);
+  return ret;
+}
+
 /// Get view matrix that transforms world coordinate space into camera space.
 Matrix!(T, 4) lookAtMatrix(T)(vec3!T eye, vec3!T at, vec3!T up) {
   const zaxis = (eye-at).normalized;

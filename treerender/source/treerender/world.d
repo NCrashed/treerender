@@ -3,7 +3,9 @@ module treerender.world;
 public import treerender.component;
 
 import treerender.input;
+import treerender.math.v3;
 import std.random;
+import std.math;
 
 /// The game uses Entity-Component-System (ECS) design where all game entities
 /// are decomposed into data pieces called Components. Components are stored
@@ -19,6 +21,7 @@ class World {
   this(string soundsDir) {
     storages.init();
     storages.rng.global = Rng(Random(unpredictableSeed)); // seeding random number generator
+    initCamera();
   }
 
   ///  Make one tick of world simulation with given inputs. Return non zero if failed.
@@ -39,5 +42,13 @@ class World {
   /// Apply player input to ship components
   private void applyEvents(float dt, InputEvents inputs) {
 
+  }
+
+  /// Initialize default camera and make it active
+  private void initCamera() {
+    auto e = storages.entities.create();
+    auto cam = Camera().perspective(PI/3, storages.windowSize.global.aspect, 0.001, 100).lookAt(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1));
+    storages.camera.insert(e, cam);
+    storages.activeCamera.global = e;
   }
 }
