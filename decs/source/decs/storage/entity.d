@@ -87,7 +87,7 @@ mixin template MakeEntitiesStorage(CS...) {
     /// Mark that entity has given components
     void addComponents(C...)(Entity e) {
       static assert(CS.hasAll!C, "Some components " ~ C.stringof
-        ~ " is not known in world ones " ~ T.stringof);
+        ~ " are not known in world ones " ~ T.stringof);
       immutable i = aliveIndex(e);
       assert(i >= 0, "Entity " ~ e.stringof ~ " is dead!");
       tags[i] = tags[i] | CS.join!C;
@@ -96,19 +96,28 @@ mixin template MakeEntitiesStorage(CS...) {
     /// Mark that entity doesn't have given components
     void removeComponents(C...)(Entity e) {
       static assert(CS.hasAll!C, "Some components " ~ C.stringof
-        ~ " is not known in world ones " ~ T.stringof);
+        ~ " are not known in world ones " ~ T.stringof);
       immutable i = aliveIndex(e);
       assert(i >= 0, "Entity " ~ e.stringof ~ " is dead!");
       tags[i] = tags[i] & ~CS.join!C;
     }
 
+    /// Return $(B true) if given entity has given components.
+    bool has(C...)(size_t i) inout {
+      static assert(CS.hasAll!C, "Some components " ~ C.stringof
+        ~ " are not known in world ones " ~ T.stringof);
+      return (tags[i] & CS.join!C) == CS.join!C;
+    }
+
     /// Return $(B true) if given alive entity (defined by index in alive array)
     /// has given components. Designed to be used acros iteration over all
     /// alive entities.
-    bool aliveHas(C...)(size_t i) {
+    bool aliveHas(C...)(Entity e) inout {
       static assert(CS.hasAll!C, "Some components " ~ C.stringof
-        ~ " is not known in world ones " ~ T.stringof);
-      return (tags[i] & CS.join!C) == CS.join!C;
+        ~ " are not known in world ones " ~ T.stringof);
+      const i = aliveIndex(e);
+      if (i < 0) return false;
+      return aliveHas(i);
     }
 
     /// Iteration over alive entities

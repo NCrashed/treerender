@@ -29,7 +29,7 @@ class VecStorage(T) {
   }
 
   /// Get component for the entity
-  T get(Entity e) {
+  T get(Entity e) inout {
     assert(e < items.length, "Getting component for entity outside of range, asked: "
       ~ e.stringof ~ ", but has only: " ~ items.length.stringof);
     return items[e];

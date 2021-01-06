@@ -4,8 +4,9 @@ public import treerender.component;
 
 import treerender.input;
 import treerender.math.v3;
-import std.random;
 import std.math;
+import std.random;
+import std.typecons;
 
 /// The game uses Entity-Component-System (ECS) design where all game entities
 /// are decomposed into data pieces called Components. Components are stored
@@ -37,6 +38,17 @@ class World {
   /// Render world in current frame
   void render() {
 
+  }
+
+  /// Get current active camera. Renderer use this method to get view-projection
+  /// matrix.
+  Nullable!Camera activeCamera() inout {
+    const e = storages.activeCamera.global.cameraEntity;
+    if (storages.entities.has(e)) {
+      return nullable(storages.camera.get(e));
+    } else {
+      return Nullable!Camera();
+    }
   }
 
   /// Apply player input to ship components

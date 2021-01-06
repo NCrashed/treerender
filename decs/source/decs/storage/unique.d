@@ -27,7 +27,7 @@ class UniqueStorage(T) {
   }
 
   /// Get component for the entity
-  T get(Entity e) {
+  T get(Entity e) inout {
     assert(e == owner, "Getting component for entity that doesn't have unique component, asked: "
       ~ e.stringof ~ ", but unique owned by: " ~ owner.stringof);
     assert(!unique.isNull, "Getting not existing unique component!");

@@ -17,7 +17,7 @@ class GlobalStorage(T) {
   }
 
   /// Get component for the entity
-  T get(Entity e) {
+  T get(Entity e) inout {
     return global;
   }
 
