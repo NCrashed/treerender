@@ -1,7 +1,6 @@
 module treerender.geometry.axis;
 
-import treerender.math.v2;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Define a independent perpindicular to all others direction in space
 enum Axis {

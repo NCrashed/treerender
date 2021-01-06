@@ -2,7 +2,7 @@ module treerender.math.quaternion;
 
 import treerender.math.matrix;
 import treerender.math.trigonometry;
-import treerender.math.v3;
+import treerender.math.vector;
 import std.math;
 
 alias quatf = Quaternion!float;
@@ -14,6 +14,23 @@ struct Quaternion(T) {
   T x, y, z, w;
 
   alias This = Quaternion!T;
+
+  /// Return vector component fo quaternion. It is not axis (actually scaled axis).
+  vec3!T vec() inout {
+    return vec3!T(x, y, z);
+  }
+
+  /// Return axis of rotation for quaternion.
+  vec3!T axis() inout {
+    return vec.normalized;
+  }
+
+  /// Set vector component of the quaternion
+  void vec(vec3!T v) {
+    x = v.x;
+    y = v.y;
+    z = v.z;
+  }
 
   /// Define rotation from axis and angle.
   /// @par axis Axis aroun which rotation perfromed, can be not normalized.
@@ -41,15 +58,77 @@ struct Quaternion(T) {
     return This(x, y, z, w);
   }
 
-  /// Make rotation for object located in `source` to position `dest`
-  /// Vector `up` is used as z axis.
-  static This lookAt(vec3!T source, vec3!T dest, vec3!T up) {
-    const forward = (dest - source).normalized;
-    const xaxis = vec3!T(1.0, 0, 0).reject(up);
-    const cosa = xaxis.dot(forward);
-    const angle = acos(cosa);
-    return This.fromAxis(up, angle);
-  }
+  /// Create from rotation matrix
+  static This fromMatrix(Matrix!(T, 4, 4) m)
+	{
+		This ret;
+    float tr = m[0,0] + m[1,1] + m[2,2]; // trace of martix
+    if (tr > 0.0f) { // if trace positive than "w" is biggest component
+      ret.x = (m[1,2] - m[2,1]);
+			ret.y = (m[2,0] - m[0,2]);
+			ret.z = (m[0,1] - m[1,0]);
+			ret.w = (tr+1.0f);
+			auto t = 0.5/sqrt( ret.w );  // "w" contain the "norm * 4"
+			ret.x*=t;
+			ret.y*=t;
+			ret.z*=t;
+			ret.w*=t;
+    } else if( (m[0,0] > m[1,1] ) && ( m[0,0] > m[2,2]) ) { // Some of vector components is bigger
+			ret.x = (1.0f + m[0,0] - m[1,1] - m[2,2]);
+			ret.y = (m[1,0] + m[0,1]);
+			ret.z = (m[2,0] + m[0,2]);
+			ret.w = (m[1,2] - m[2,1]);
+			auto t = 0.5/sqrt( ret.x );
+			ret.x*=t;
+			ret.y*=t;
+			ret.z*=t;
+			ret.w*=t;
+		} else if ( m[1,1] > m[2,2] ) {
+			ret.x = m[1,0] + m[0,1];
+			ret.y = 1.0f + m[1,1] - m[0,0] - m[2,2];
+			ret.z = m[2,1] + m[1,2];
+			ret.w = m[2,0] - m[0,2];
+			auto t = 0.5/sqrt( ret.y );
+			ret.x*=t;
+			ret.y*=t;
+			ret.z*=t;
+			ret.w*=t;
+		} else {
+			ret.x = m[2,0] + m[0,2];
+			ret.y = m[2,1] + m[1,2];
+			ret.z = 1.0f + m[2,2] - m[0,0] - m[1,1];
+			ret.w = m[0,1] - m[1,0];
+			auto t = 0.5/sqrt( ret.z );
+			ret.x*=t;
+			ret.y*=t;
+			ret.z*=t;
+			ret.w*=t;
+		}
+		return ret;
+	}
+
+  // /// Make rotation for object located in `source` to position `dest`
+  // /// Vector `up` is used as z axis.
+  // static This lookAt(vec3!T source, vec3!T dest, vec3!T up) {
+  //   const dir = (dest - source).normalized;
+  //   const xaxis = vec3!T(1.0, 0, 0);
+  //   const yaxis = dir.cross(xaxis);
+  //   auto yangle = acos(dir.dot(xaxis));
+  //
+  //   const third = yaxis.cross(xaxis);
+  //   if (third.dot(dir) < 0) yangle = -yangle;
+  //   const q1 = This.fromAxis(yaxis, yangle);
+  //
+  //   auto newup = q1.rotate(up.normalized);
+  //   auto right = dir.cross(newup).normalized;
+  //   auto wrongup = right.cross(dir).normalized;
+  //
+  //   const rotAxis = newup.cross(wrongup);
+  //   const rotAngle = acos(newup.dot(wrongup));
+  //   const q2 = This.fromAxis(rotAxis, rotAngle);
+  //
+  //   return q1 * q2;
+  // }
 
   /// Convert quaternion to rotation matrix
   Matrix!(T, 4) matrix() inout {
@@ -112,4 +191,13 @@ struct Quaternion(T) {
 		ret.w = w*q.w - x*q.x - y*q.y - z*q.z; // a1*a2-b1*b2-c1*c2-d1*d2
 		return ret;
 	}
+
+  /// Rotate vector with given quaternion
+  vec3!T rotate(vec3!T v) inout {
+    Quaternion vq;
+    vq.vec = v;
+    vq.w = 0.0f;
+    auto vqt = this*vq*conjugation();
+    return -vqt.vec;
+  }
 }

@@ -2,7 +2,7 @@ module treerender.geometry.side;
 
 import std.typecons;
 import treerender.geometry.axis;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Encoding of one of 6 directions of faces of cube
 enum Side {

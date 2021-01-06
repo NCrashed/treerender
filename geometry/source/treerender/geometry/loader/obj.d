@@ -7,8 +7,7 @@ import std.file;
 import std.stdio;
 import std.typecons;
 import treerender.geometry.mesh;
-import treerender.math.v2;
-import treerender.math.v3;
+import treerender.math.vector;
 
 Mesh!NoData loadObj(string file) {
   writeln("Opening obj file ", file, "...");

@@ -4,8 +4,7 @@ import std.traits;
 import treerender.geometry.axis;
 import treerender.geometry.mesh;
 import treerender.geometry.side;
-import treerender.math.v2;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Write cube side of given $(B size) in voxels to given mesh at voxel $(B pos) for grid of size $(B n).
 void insertCubeSide(Side s, Primitive p, size_t n, T)(Mesh!(T, p) mesh, v3u pos, v2u size, T value)

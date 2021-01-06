@@ -5,7 +5,7 @@ import decs.storage.global;
 import decs.storage.vector;
 import treerender.math.matrix;
 import treerender.math.quaternion;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Type of projections
 enum ProjType {
@@ -125,14 +125,36 @@ struct Camera {
 
   /// Get view matrix from the camera
   mat4 view() inout {
-    return pos.translation * rot.matrix;
+    auto rm = rot.matrix;
+    const xaxis = rm.row(0).xyz;
+    const yaxis = rm.row(1).xyz;
+    const zaxis = rm.row(2).xyz;
+    rm[0, 3] = -xaxis.dot(pos);
+    rm[1, 3] = -yaxis.dot(pos);
+    rm[2, 3] = -zaxis.dot(pos);
+    return rm;
+  }
+
+  /// Get projection matrix from the camera
+  mat4 projection() inout {
+    return proj.matrix;
+  }
+
+  /// Return current aspect ratio of camera
+  float aspect() inout {
+    return proj.aspect;
+  }
+
+  /// Set aspect ratio of camera
+  void aspect(float v) {
+    proj.aspect = v;
   }
 
   /// Construct new camera that looks at given location
   Camera lookAt(v3f eye, v3f target, v3f up) inout {
     Camera ret = this;
     ret.pos = eye;
-    ret.rot = quatf.lookAt(eye, target, up);
+    ret.rot = quatf.fromMatrix(lookAtMatrix(eye, target, up));
     return ret;
   }
 }

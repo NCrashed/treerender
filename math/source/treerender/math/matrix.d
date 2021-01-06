@@ -1,10 +1,11 @@
 module treerender.math.matrix;
 
 import std.algorithm;
+import std.conv;
 import std.math;
 import std.range;
 
-import treerender.math.v3;
+import treerender.math.vector;
 
 alias mat3 = Matrix!(float, 3, 3);
 alias mat4 = Matrix!(float, 4, 4);
@@ -36,15 +37,15 @@ struct Matrix(T, size_t n, size_t m = n) {
 
   /// Reading from matrix by column and row index
   T opIndex(size_t row, size_t col) inout {
-    assert(row < n, "Matrix row " ~ row.stringof ~ " is out of bounds " ~ n.stringof);
-    assert(col < n, "Matrix col " ~ col.stringof ~ " is out of bounds " ~ m.stringof);
+    assert(row < n, "Matrix row " ~ row.to!string ~ " is out of bounds " ~ n.stringof);
+    assert(col < n, "Matrix col " ~ col.to!string ~ " is out of bounds " ~ m.stringof);
     return data[toIndex(row, col)];
   }
 
   /// Writing to matrix by column and row index
   void opIndexAssign(T value, size_t row, size_t col) {
-    assert(row < n, "Matrix row " ~ row.stringof ~ " is out of bounds " ~ n.stringof);
-    assert(col < n, "Matrix col " ~ col.stringof ~ " is out of bounds " ~ m.stringof);
+    assert(row < n, "Matrix row " ~ row.to!string ~ " is out of bounds " ~ n.stringof);
+    assert(col < n, "Matrix col " ~ col.to!string ~ " is out of bounds " ~ m.stringof);
     data[toIndex(row, col)] = value;
   }
 
@@ -60,6 +61,22 @@ struct Matrix(T, size_t n, size_t m = n) {
       }
     }
     return ret;
+  }
+
+  /// Get matrix row with index `i`
+  vec!(T, m) row(size_t i) inout {
+    const j = toIndex(i, 0);
+    T[m] vdata = data[j .. j+m];
+    return vec!(T, m)(vdata);
+  }
+
+  /// Get matrix column with index `i`
+  vec!(T, n) column(size_t i) inout {
+    vec!(T, n) v;
+    static foreach(j; 0.. n) {
+      v[j] = data[toIndex(j, i)];
+    }
+    return v;
   }
 
   /// Convert row and column to flat index
@@ -96,7 +113,7 @@ Matrix!(T, 4) orthographic(T)(T left, T right, T bottom, T top, T near, T far) {
 }
 
 /// Get view matrix that transforms world coordinate space into camera space.
-Matrix!(T, 4) lookAtMatrix(T)(vec3!T eye, vec3!T at, vec3!T up) {
+Matrix!(T, 4) lookAtMatrix(T)(vec!(T, 3) eye, vec!(T, 3) at, vec!(T, 3) up) {
   const zaxis = (eye-at).normalized;
   const xaxis = up.cross(zaxis).normalized;
   const yaxis = zaxis.cross(xaxis).normalized;
@@ -110,7 +127,7 @@ Matrix!(T, 4) lookAtMatrix(T)(vec3!T eye, vec3!T at, vec3!T up) {
 }
 
 /// Get translation matrix to translate objects across given vector
-Matrix!(T, 4) translation(T)(vec3!T v) {
+Matrix!(T, 4) translation(T)(vec!(T, 3) v) {
   auto ret = Matrix!(T, 4).identity;
   ret[0,3] = v.x;
 	ret[1,3] = v.y;

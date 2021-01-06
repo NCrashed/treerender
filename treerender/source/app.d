@@ -214,6 +214,13 @@ void main()
 		quit = processEvents(input_events, world.storages.windowSize.global);
 
 		// world.render();
+		auto mcam = world.activeCamera;
+		if (mcam.isNull) continue;
+		auto cam = mcam.get;
+		cam.aspect = world.storages.windowSize.global.aspect;
+		writeln(cam.view);
+		writeln(lookAtMatrix!float(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1)));
+
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -221,10 +228,9 @@ void main()
 		glUseProgram(programId);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		const mat4 projMat = projection!float(PI/3, world.storages.windowSize.global.aspect, 0.001, 100);
-		const mat4 viewMatrix = lookAtMatrix!float(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1));
+		const mat4 viewMatrix = cam.view;
 		const mat4 modelMatrix = quatf.fromAxis(v3f(-1, -1, -1), angle).matrix * translation(v3f(-0.5, -0.5, -0.5));
-		const mat4 mvp = projMat * viewMatrix * modelMatrix;
+		const mat4 mvp = cam.projection * viewMatrix * modelMatrix;
 
 		// Send our transformation to the currently bound shader,
 		// in the "MVP" uniform

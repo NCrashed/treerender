@@ -3,7 +3,7 @@ module treerender.world;
 public import treerender.component;
 
 import treerender.input;
-import treerender.math.v3;
+import treerender.math.vector;
 import std.math;
 import std.random;
 import std.typecons;

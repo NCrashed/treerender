@@ -4,7 +4,7 @@ import std.conv;
 import std.traits;
 import treerender.geometry.axis;
 import treerender.geometry.side;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /**
 Returns `true` is `V` is type that can be a voxel value. Voxel must define

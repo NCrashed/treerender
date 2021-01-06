@@ -1,8 +1,7 @@
 module treerender.geometry.mesh;
 
 import std.container.array;
-import treerender.math.v2;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Primitive types that are located inside mesh
 enum Primitive {

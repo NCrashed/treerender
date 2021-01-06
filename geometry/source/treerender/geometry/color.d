@@ -1,7 +1,7 @@
 module treerender.geometry.color;
 
 import std.random;
-import treerender.math.v4;
+import treerender.math.vector;
 
 /// The simpliest RGBA color with [0 .. 1] range
 struct Color {

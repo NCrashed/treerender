@@ -5,8 +5,7 @@ import treerender.geometry.axis;
 import treerender.geometry.cube;
 import treerender.geometry.side;
 import treerender.geometry.voxel;
-import treerender.math.v2;
-import treerender.math.v3;
+import treerender.math.vector;
 
 /// Convert each voxel into triangle mesh using greedy meshing algorithm.
 Mesh!(T, p) greedyTriangulate(Primitive p, T, size_t n)(Voxels!(T, n) grid) {
@@ -65,7 +64,7 @@ private void triangulateSlice(Primitive p, Axis a, Side s, T, size_t n)(Mesh!(T,
         void zeroMask(v2u size) {
           foreach(sx; 0 .. size.x) {
             foreach(sy; 0 .. size.y) {
-              const v = a.removeAxis(vi);
+              const v = a.removeAxis!uint(vi);
               mask[v.y + sy][v.x + sx] = T.empty;
             }
           }

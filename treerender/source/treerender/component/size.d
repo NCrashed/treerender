@@ -1,7 +1,7 @@
 module treerender.component.size;
 
 import decs.storage.global;
-import treerender.math.v2;
+import treerender.math.vector;
 
 /// Window size of renderer
 struct WindowSize {
