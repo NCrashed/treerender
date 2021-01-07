@@ -103,7 +103,9 @@ struct Camera {
   alias Storage = VecStorage!Camera;
   /// Constatn rotation speed by mouse
   enum rotationSpeed = 4*PI;
-
+  /// Move speed of camera per second
+  enum moveSpeed = 10;
+  
   /** Make camera with perspective projection
   * @par fovy - field of view angle in radians
   * @par aspect - height / width of viewport
@@ -178,6 +180,28 @@ struct Camera {
   Camera rotateForward(float angle) inout {
     Camera ret = this;
     ret.up = quatf.fromAxis(dir, angle).rotate(up);
+    return ret;
+  }
+
+  /// Move camera across forward axis of camera.
+  Camera moveForward(float value) inout {
+    Camera ret = this;
+    ret.eye = eye + value * dir;
+    return ret;
+  }
+
+  /// Move camera across right axis of camera.
+  Camera moveRight(float value) inout {
+    Camera ret = this;
+    const right = dir.cross(up);
+    ret.eye = eye + value * right;
+    return ret;
+  }
+
+  /// Move camera across up axis of camera
+  Camera moveUp(float value) inout {
+    Camera ret = this;
+    ret.eye = eye + value * up;
     return ret;
   }
 }

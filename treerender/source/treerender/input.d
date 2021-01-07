@@ -8,6 +8,7 @@ struct InputEvents {
   bool playerForward = false;
   bool playerBack = false;
   bool playerJump = false;
+  bool playerCrouch = false;
   bool playerPrimAction = false;
   v2i playerMouseDelta = v2i(0, 0);
 }

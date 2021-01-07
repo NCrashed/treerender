@@ -25,6 +25,8 @@ import loader = bindbc.loader.sharedlib;
 /// Iterate through user input and window events
 bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 	SDL_Event event = void;
+	events.playerMouseDelta = v2i(0, 0);
+	events.playerPrimAction = false;
 	while (SDL_PollEvent(&event) != 0) {
 		switch (event.type) {
 			case SDL_QUIT: return true;
@@ -34,7 +36,8 @@ bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 				case SDLK_s: events.playerBack = true; break;
 				case SDLK_a: events.playerLeft = true; break;
 				case SDLK_d: events.playerRight = true; break;
-				case SDLK_SPACE: events.playerPrimAction = true; break;
+				case SDLK_LCTRL: events.playerCrouch = true; break;
+				case SDLK_SPACE: events.playerJump = true; break;
 				default: {}
 			} break;
 			case SDL_KEYUP: switch (event.key.keysym.sym) {
@@ -42,7 +45,8 @@ bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 				case SDLK_s: events.playerBack = false; break;
 				case SDLK_a: events.playerLeft = false; break;
 				case SDLK_d: events.playerRight = false; break;
-				case SDLK_SPACE: events.playerPrimAction = false; break;
+				case SDLK_LCTRL: events.playerCrouch = false; break;
+				case SDLK_SPACE: events.playerJump = false; break;
 				default: {}
 			} break;
 			case SDL_WINDOWEVENT: switch (event.window.event) {
@@ -59,6 +63,9 @@ bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 			case SDL_MOUSEMOTION:
 				events.playerMouseDelta.x = event.motion.xrel;
 				events.playerMouseDelta.y = event.motion.yrel;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				events.playerPrimAction = true;
 				break;
 			default: {}
 		}
@@ -216,7 +223,6 @@ void main()
 	float angle = 0;
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
-		inputEvents = InputEvents();
 		quit = processEvents(inputEvents, world.storages.windowSize.global);
 
 		// world.render();

@@ -59,10 +59,19 @@ class World {
       auto e = storages.activeCamera.global.cameraEntity;
       const x = inputs.playerMouseDelta.x;
       const y = inputs.playerMouseDelta.y;
-      if(x != 0 || y != 0) {
+      if(x != 0 || y != 0 || inputs.playerForward || inputs.playerBack || inputs.playerLeft || inputs.playerRight || inputs.playerJump || inputs.playerCrouch) {
         auto cam = mcam.get;
+
         if(x != 0) cam = cam.rotateUp(-x * dt * Camera.rotationSpeed);
         if(y != 0) cam = cam.rotateRight(-y * dt * Camera.rotationSpeed / storages.windowSize.global.aspect);
+
+        if(inputs.playerForward) cam = cam.moveForward(dt * Camera.moveSpeed);
+        if(inputs.playerBack) cam = cam.moveForward(-dt * Camera.moveSpeed);
+        if(inputs.playerRight) cam = cam.moveRight(dt * Camera.moveSpeed);
+        if(inputs.playerLeft) cam = cam.moveRight(-dt * Camera.moveSpeed);
+        if(inputs.playerJump) cam = cam.moveUp(dt * Camera.moveSpeed);
+        if(inputs.playerCrouch) cam = cam.moveUp(-dt * Camera.moveSpeed);
+
         storages.camera.insert(e, cam);
       }
     }
