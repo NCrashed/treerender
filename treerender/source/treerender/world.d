@@ -62,7 +62,7 @@ class World {
       if(x != 0 || y != 0) {
         auto cam = mcam.get;
         if(x != 0) cam = cam.rotateUp(-x * dt * Camera.rotationSpeed);
-        if(y != 0) cam = cam.rotateRight(-y * dt * Camera.rotationSpeed);
+        if(y != 0) cam = cam.rotateRight(-y * dt * Camera.rotationSpeed / storages.windowSize.global.aspect);
         storages.camera.insert(e, cam);
       }
     }

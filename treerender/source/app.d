@@ -140,6 +140,7 @@ void main()
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	GLuint vertexArrayId;
 	glGenVertexArrays(1, &vertexArrayId);
