@@ -3,6 +3,7 @@ module treerender.component.camera;
 import decs.entity;
 import decs.storage.global;
 import decs.storage.vector;
+import std.math;
 import treerender.math.matrix;
 import treerender.math.quaternion;
 import treerender.math.vector;
@@ -89,15 +90,19 @@ struct Camera {
   /// Projection info. Remaps camera space to rasterization space.
   /// Usually it is perspective matrix, can be ortho projection matrix.
   Projection proj;
-  /// Rotation of camera
-  quatf rot;
   /// Position of camera
-  v3f pos;
+  v3f eye;
+  /// Direction of camera
+  v3f dir;
+  /// Up vector of camera
+  v3f up;
 
   /// Name of component
   enum name = "camera";
   /// We store size as global value
   alias Storage = VecStorage!Camera;
+  /// Constatn rotation speed by mouse
+  enum rotationSpeed = 4*PI;
 
   /** Make camera with perspective projection
   * @par fovy - field of view angle in radians
@@ -125,14 +130,7 @@ struct Camera {
 
   /// Get view matrix from the camera
   mat4 view() inout {
-    auto rm = rot.matrix;
-    const xaxis = rm.row(0).xyz;
-    const yaxis = rm.row(1).xyz;
-    const zaxis = rm.row(2).xyz;
-    rm[0, 3] = -xaxis.dot(pos);
-    rm[1, 3] = -yaxis.dot(pos);
-    rm[2, 3] = -zaxis.dot(pos);
-    return rm;
+    return lookAtMatrix(eye, eye+dir, up);
   }
 
   /// Get projection matrix from the camera
@@ -153,8 +151,33 @@ struct Camera {
   /// Construct new camera that looks at given location
   Camera lookAt(v3f eye, v3f target, v3f up) inout {
     Camera ret = this;
-    ret.pos = eye;
-    ret.rot = quatf.fromMatrix(lookAtMatrix(eye, target, up));
+    ret.eye = eye;
+    ret.dir = (target-eye).normalized;
+    ret.up = up;
+    return ret;
+  }
+
+  /// Rotate current camera around right axis of camera. It is pitch rotation.
+  Camera rotateRight(float angle) inout {
+    Camera ret = this;
+    const right = dir.cross(up);
+    const q = quatf.fromAxis(right, angle);
+    ret.dir = q.rotate(dir);
+    ret.up = q.rotate(up);
+    return ret;
+  }
+
+  /// Rotate current camera around up axis of camera. It is yaw rotation.
+  Camera rotateUp(float angle) inout {
+    Camera ret = this;
+    ret.dir = quatf.fromAxis(up, angle).rotate(dir);
+    return ret;
+  }
+
+  /// Rotate current camera around forward axis of camera. It is roll rotation.
+  Camera rotateForward(float angle) inout {
+    Camera ret = this;
+    ret.up = quatf.fromAxis(dir, angle).rotate(up);
     return ret;
   }
 }

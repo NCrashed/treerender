@@ -56,6 +56,10 @@ bool processEvents(ref InputEvents events, ref WindowSize viewport) {
 					break;
 				default: {}
 			} break;
+			case SDL_MOUSEMOTION:
+				events.playerMouseDelta.x = event.motion.xrel;
+				events.playerMouseDelta.y = event.motion.yrel;
+				break;
 			default: {}
 		}
 	}
@@ -169,7 +173,7 @@ void main()
 	auto fps_file = File("fps.out", "w");
 	auto i = 1;
 	auto quit = false;
-	auto input_events = InputEvents();
+	auto inputEvents = InputEvents();
 
 	SDL_GL_SetSwapInterval(0); // Disable VSync
 
@@ -211,15 +215,14 @@ void main()
 	float angle = 0;
 	while (!quit) {
 		immutable t1 = MonoTime.currTime();
-		quit = processEvents(input_events, world.storages.windowSize.global);
+		inputEvents = InputEvents();
+		quit = processEvents(inputEvents, world.storages.windowSize.global);
 
 		// world.render();
 		auto mcam = world.activeCamera;
 		if (mcam.isNull) continue;
 		auto cam = mcam.get;
 		cam.aspect = world.storages.windowSize.global.aspect;
-		writeln(cam.view);
-		writeln(lookAtMatrix!float(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1)));
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -323,7 +326,7 @@ void main()
 
 		immutable t2 = MonoTime.currTime();
 		immutable dt = cast(float)(t2 - t1).total!"usecs"() / 1000_000;
-		world.step(dt, input_events);
+		world.step(dt, inputEvents);
 		world.maintain();
 
 		angle += dt;

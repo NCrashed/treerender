@@ -107,29 +107,6 @@ struct Quaternion(T) {
 		return ret;
 	}
 
-  // /// Make rotation for object located in `source` to position `dest`
-  // /// Vector `up` is used as z axis.
-  // static This lookAt(vec3!T source, vec3!T dest, vec3!T up) {
-  //   const dir = (dest - source).normalized;
-  //   const xaxis = vec3!T(1.0, 0, 0);
-  //   const yaxis = dir.cross(xaxis);
-  //   auto yangle = acos(dir.dot(xaxis));
-  //
-  //   const third = yaxis.cross(xaxis);
-  //   if (third.dot(dir) < 0) yangle = -yangle;
-  //   const q1 = This.fromAxis(yaxis, yangle);
-  //
-  //   auto newup = q1.rotate(up.normalized);
-  //   auto right = dir.cross(newup).normalized;
-  //   auto wrongup = right.cross(dir).normalized;
-  //
-  //   const rotAxis = newup.cross(wrongup);
-  //   const rotAngle = acos(newup.dot(wrongup));
-  //   const q2 = This.fromAxis(rotAxis, rotAngle);
-  //
-  //   return q1 * q2;
-  // }
-
   /// Convert quaternion to rotation matrix
   Matrix!(T, 4) matrix() inout {
     auto ret = Matrix!(T, 4).zeros;
@@ -194,10 +171,7 @@ struct Quaternion(T) {
 
   /// Rotate vector with given quaternion
   vec3!T rotate(vec3!T v) inout {
-    Quaternion vq;
-    vq.vec = v;
-    vq.w = 0.0f;
-    auto vqt = this*vq*conjugation();
-    return -vqt.vec;
+    const u = this.vec;
+    return 2 * u.dot(v) * u + (w*w - u.dot(u)) * v + 2 * w * u.cross(v);
   }
 }

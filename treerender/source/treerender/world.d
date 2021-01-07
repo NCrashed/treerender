@@ -28,6 +28,7 @@ class World {
   ///  Make one tick of world simulation with given inputs. Return non zero if failed.
   void step(float dt, in InputEvents events) {
     storages.deltaTime.global = dt;
+    applyEvents(dt, events);
   }
 
   /// Maintain world delayed actions
@@ -53,13 +54,24 @@ class World {
 
   /// Apply player input to ship components
   private void applyEvents(float dt, InputEvents inputs) {
-
+    auto mcam = activeCamera;
+    if(!mcam.isNull) {
+      auto e = storages.activeCamera.global.cameraEntity;
+      const x = inputs.playerMouseDelta.x;
+      const y = inputs.playerMouseDelta.y;
+      if(x != 0 || y != 0) {
+        auto cam = mcam.get;
+        if(x != 0) cam = cam.rotateUp(-x * dt * Camera.rotationSpeed);
+        if(y != 0) cam = cam.rotateRight(-y * dt * Camera.rotationSpeed);
+        storages.camera.insert(e, cam);
+      }
+    }
   }
 
   /// Initialize default camera and make it active
   private void initCamera() {
     auto e = storages.entities.create();
-    auto cam = Camera().perspective(PI/3, storages.windowSize.global.aspect, 0.001, 100).lookAt(v3f(-0.5, -0.5, 2), v3f(0, 0, 0), v3f(0, 0, 1));
+    auto cam = Camera().perspective(PI/3, storages.windowSize.global.aspect, 0.001, 100).lookAt(v3f(-1.5, 0, -1.5), v3f(0, 0, 0), v3f(0, 1, 0));
     storages.camera.insert(e, cam);
     storages.activeCamera.global = e;
   }
