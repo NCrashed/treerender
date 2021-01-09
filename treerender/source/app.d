@@ -10,6 +10,7 @@ import treerender.geometry.cube;
 import treerender.geometry.greedy;
 import treerender.geometry.loader.obj;
 import treerender.geometry.mesh;
+import treerender.geometry.octo;
 import treerender.geometry.voxel;
 import treerender.input;
 import treerender.math;
