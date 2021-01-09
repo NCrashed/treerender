@@ -14,6 +14,8 @@ alias v2f = vec2!float;
 alias v2i = vec2!int;
 /// Shorthand for unsigned integral vectors
 alias v2u = vec2!uint;
+/// Shorthand for `size_t` vectors
+alias v2s = vec2!size_t;
 
 /// Shorthand for floating vector
 alias v3f = vec3!float;
@@ -21,6 +23,8 @@ alias v3f = vec3!float;
 alias v3i = vec3!int;
 /// Shorthand for unsigned integral vector
 alias v3u = vec3!uint;
+/// Shorthand for `size_t` vectors
+alias v3s = vec3!size_t;
 
 /// Shorthand for floating vector
 alias v4f = vec4!float;
@@ -28,6 +32,8 @@ alias v4f = vec4!float;
 alias v4i = vec4!int;
 /// Shorthand for unsigned integral vector
 alias v4u = vec4!uint;
+/// Shorthand for `size_t` vectors
+alias v4s = vec4!size_t;
 
 /// Shortcut for 2D vector
 alias vec2(T) = vec!(T, 2);
@@ -167,7 +173,7 @@ struct vec(T, size_t n) {
       data[i] = value;
     }
   }
-  
+
   /// Compare per field two vectors with given precision (for floating point equality tests)
   bool approxEq(T epsilon = 0.000001)(vec!(T, n) other) inout {
     return zip(cast(T[])data[], other.data[]).map!(a => abs(a[0] - a[1]) <= epsilon).all;
