@@ -147,18 +147,18 @@ struct OctoTree(T, index = ushort) {
     tree.root = root;
     return tree;
   }
-}
-unittest {
-  struct Node {
-    v3f value = v3f(0, 0, 0);
-    alias value this;
-  }
-  import std.stdio;
-  auto octree = OctoTree!Node.generate(
-    (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
-    (c) => Node(cast(v3f)c.gridIndex),
-    (a, b) => Node((a.value + b.value) / 2)
-    );
+  unittest {
+    struct Node {
+      v3f value = v3f(0, 0, 0);
+      alias value this;
+    }
+    import std.stdio;
+    auto octree = OctoTree!Node.generate(
+      (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
+      (c) => Node(cast(v3f)c.gridIndex),
+      (a, b) => Node((a.value + b.value) / 2)
+      );
 
-  writeln(octree.nodes[8]);
+    writeln(octree.nodes[8]);
+  }
 }
