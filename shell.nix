@@ -3,6 +3,7 @@ with import ./nix/pkgs.nix {
       packageOverrides = pkgs: {
         dmd = pkgs.callPackage ./nix/dmd {};
         ldc = pkgs.callPackage ./nix/ldc {};
+        nuklear = pkgs.callPackage ./nix/nuklear {};
       };
     };
   };
@@ -25,5 +26,7 @@ stdenv.mkDerivation rec {
     pkg-config
     libGL
     renderdoc
+    freetype
+    nuklear
   ];
 }
