@@ -1,6 +1,8 @@
 module treerender.geometry.octo;
 
 import std.container.array;
+import std.range;
+import std.traits;
 import std.typecons;
 import treerender.math.vector;
 
@@ -35,6 +37,11 @@ struct Crumbs {
   Array!Child crumbs;
   alias crumbs this;
 
+  /// Copy constructor
+  this(Array!Child elems) {
+    crumbs = elems;
+  }
+
   /// Allows to make crumbs with direct enumeration of path in argument list
   this(Child[] elems...) {
     crumbs = Array!Child(elems);
@@ -45,11 +52,18 @@ struct Crumbs {
     return crumbs.length;
   }
 
+  /// Add child to path with copying of whole array
+  Crumbs add(Child c) inout {
+    auto ret = (cast(Array!Child)crumbs).dup();
+    ret.insertBack(c);
+    return Crumbs(ret);
+  }
+
   /// Return current subtree index within all other subtrees of
   /// the same depth. It is index of sell if the tree is filled
   /// with cubes of same size of the current subtree.
   v3s gridIndex() inout {
-    const d = depth;
+    auto d = depth;
     v3s go(v3s acc, size_t i) {
       if(i >= d) return acc;
       return go((acc << 1) + crumbs[i].childOffset, i+1);
@@ -65,6 +79,14 @@ struct Crumbs {
     assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).gridIndex == v3s(7, 7, 7));
     assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).gridIndex == v3s(4, 7, 4));
   }
+}
+
+/// Result of check delegate in $(REF generate) that indicates whether we need
+/// to go deeper or generate leaf of marks an empty node.
+enum GenCheck {
+  deeper,
+  generate,
+  empty,
 }
 
 /// Octo tree separates cubic volume to 8 subcubes. The implementation is packed
@@ -89,25 +111,54 @@ struct OctoTree(T, index = ushort) {
   alias This = OctoTree!(T, index);
 
   /** Generate the octotree using delegates
-  * @param genFunc delegate that first checks whether we go deeper or generate at given stage.
-  *        `null` is go deeper either return value means generate here.
-  *         Crumbs parameter indicates which node we are checking at the moment.
+  * @param checkFunc delegate that returns `GenCheck.generate` when we should stop and generate leaf,
+  * `GenCheck.deeper` when we need go deeper and `GenCheck.empty` if given node is empty.
+  * @param genFunc delegate that generates leaf node. Crumbs parameter indicates which node we are checking at the moment.
   * @param combineFunc delegate that takes data of children and interpolates to new value in upper nonleaf.
   */
-  static This generate(Nullable!T delegate(Crumbs) genFunc, T delegate(T, T) combineFunc)
+  static This generate(GenCheck delegate(const Crumbs) checkFunc, T delegate(const Crumbs) genFunc, T delegate(T, T) combineFunc)
   {
-    return This();
+    auto tree = This();
+    index go(Crumbs crumbs) {
+      if(checkFunc(crumbs) == GenCheck.deeper) {
+        index[8] children;
+        ubyte tags;
+        T interpolated;
+        foreach(s; [EnumMembers!Child]) {
+          auto childCrumbs = crumbs.add(s);
+          if(checkFunc(childCrumbs) != GenCheck.empty) {
+            children[cast(size_t)s] = go(childCrumbs);
+            tags &= 1 << s;
+            interpolated = combineFunc(interpolated, tree.nodes[children[cast(size_t)s]].data);
+          }
+        }
+        Node node = { flags: tags, children: children, data: interpolated };
+        auto i = cast(index)tree.nodes.length;
+        tree.nodes.insertBack(node);
+        return i;
+      } else {
+        Node node = { data: genFunc(crumbs) };
+        const i = cast(index)tree.nodes.length;
+        tree.nodes.insertBack(node);
+        return i;
+      }
+    }
+    const root = go(Crumbs());
+    tree.root = root;
+    return tree;
   }
 }
 unittest {
-  Nullable!v3f genIndexed(size_t d, Crumbs c) {
-    if(c.depth < d) return Nullable!v3f();
-    return nullable(cast(v3f)c.gridIndex);
+  struct Node {
+    v3f value = v3f(0, 0, 0);
+    alias value this;
   }
-
-  auto octree = OctoTree!v3f.generate(
-    (c) => genIndexed(1, c), // Stop right after root node
-    (a, b) => (a + b) / 2
+  import std.stdio;
+  auto octree = OctoTree!Node.generate(
+    (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
+    (c) => Node(cast(v3f)c.gridIndex),
+    (a, b) => Node((a.value + b.value) / 2)
     );
 
+  writeln(octree.nodes[8]);
 }
