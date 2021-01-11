@@ -19,7 +19,7 @@ enum Child: ubyte {
 }
 
 /// Get 3D index offset of octree child
-static v3s childOffset(Child c) {
+v3s childOffset(Child c) {
   final switch(c) {
     case(Child.backLeftBottom):   return v3s(0, 0, 0);
     case(Child.frontLeftBottom):  return v3s(1, 0, 0);
@@ -30,6 +30,12 @@ static v3s childOffset(Child c) {
     case(Child.backRightTop):     return v3s(0, 1, 1);
     case(Child.frontRightTop):    return v3s(1, 1, 1);
   }
+}
+
+/// Get next child in order
+Nullable!Child nextChild(Child c) {
+  if(c >= Child.frontRightTop) return Nullable!Child();
+  else return nullable(cast(Child)(c+1));
 }
 
 /// Crumbs are path from root to specific subtree
@@ -50,6 +56,11 @@ struct Crumbs {
   /// Return depth of current subtree the crumbs pointing to
   size_t depth() inout {
     return crumbs.length;
+  }
+
+  /// Return last element in crumbs
+  Child last() inout {
+    return crumbs[$-1];
   }
 
   /// Add child to path with copying of whole array
@@ -100,6 +111,11 @@ struct OctoTree(T, index = ushort) {
     index[8] children;
     /// Data in the node
     T data;
+
+    /// Return `true` if given node is leaf in tree
+    bool isLeaf() inout {
+      return flags == 0;
+    }
   }
 
   /// Root node of the octree. Can be reassigned on resizes.
@@ -128,7 +144,7 @@ struct OctoTree(T, index = ushort) {
           auto childCrumbs = crumbs.add(s);
           if(checkFunc(childCrumbs) != GenCheck.empty) {
             children[cast(size_t)s] = go(childCrumbs);
-            tags &= 1 << s;
+            tags |= 1 << s;
             interpolated = combineFunc(interpolated, tree.nodes[children[cast(size_t)s]].data);
           }
         }
@@ -147,18 +163,99 @@ struct OctoTree(T, index = ushort) {
     tree.root = root;
     return tree;
   }
-  unittest {
-    struct Node {
-      v3f value = v3f(0, 0, 0);
-      alias value this;
-    }
-    import std.stdio;
-    auto octree = OctoTree!Node.generate(
-      (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
-      (c) => Node(cast(v3f)c.gridIndex),
-      (a, b) => Node((a.value + b.value) / 2)
-      );
 
-    writeln(octree.nodes[8]);
+  /// Create range that iterates nodes at maximum depth `d`
+  auto overDepth(size_t d)() {
+    struct OverDepth {
+      This tree;
+      Crumbs crumbs;
+      Array!index path;
+
+      this(This tree) {
+        this.tree = tree;
+        crumbs = Crumbs();
+        path = Array!index(tree.root);
+        popFront();
+      }
+
+      void popFront() {
+        import std.stdio;
+        void ascend()() {
+          writeln("Ascend ", crumbs[].array, " ", path[].array);
+          if(path.length == 0) return;
+          if(crumbs.length == 0) {
+            path.removeBack();
+            return;
+          }
+          const last = crumbs.last;
+          crumbs.removeBack();
+          path.removeBack();
+          const node = tree.nodes[path[$-1]];
+          const mnext = nextChild(last);
+          if(mnext.isNull) ascend();
+          else {
+            const next = mnext.get;
+            crumbs.insertBack(next);
+            path.insertBack(node.children[cast(size_t)next]);
+            descend();
+          }
+        }
+        void descend()() {
+          writeln("Descend ", crumbs[].array, " ", path[].array);
+          const node = tree.nodes[path[$-1]];
+          writeln(crumbs.depth >= d, " ", node.isLeaf);
+          if(crumbs.depth >= d || node.isLeaf) ascend();
+          else {
+            size_t i = 0;
+            while((node.flags | i) == 0) i++;
+            crumbs.insertBack(cast(Child)i);
+            path.insertBack(node.children[i]);
+            if(crumbs.depth < d && !tree.nodes[path[$-1]].isLeaf) descend();
+          }
+        }
+        descend();
+      }
+
+      bool empty() {
+        return path.length == 0;
+      }
+
+      Tuple!(const Crumbs, T) front() {
+        return tuple(cast(const)crumbs, tree.nodes[path[$-1]].data);
+      }
+    }
+
+    return OverDepth(this);
   }
+
+  /// Convert to grid at given depth
+  Nullable!T[2^^d][2^^d][2^^d] toGrid(size_t d)() inout {
+    Nullable!T[2^^d][2^^d][2^^d] res;
+
+    return res;
+  }
+
+}
+unittest {
+  struct A {
+    v3f value = v3f(0, 0, 0);
+    alias value this;
+  }
+  import std.stdio;
+  auto octree = OctoTree!A.generate(
+    (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
+    (c) => A(cast(v3f)c.gridIndex),
+    (a, b) => A((a.value + b.value) / 2)
+    );
+    writeln(octree.overDepth!1.array);
+    assert(octree.toGrid!1 == [
+        [
+          [v3f(0, 0, 0), v3f(1, 0, 0)],
+          [v3f(0, 1, 0), v3f(1, 1, 0)],
+        ],
+        [
+          [v3f(0, 0, 1), v3f(1, 0, 1)],
+          [v3f(0, 1, 1), v3f(1, 1, 1)],
+        ],
+      ]);
 }
