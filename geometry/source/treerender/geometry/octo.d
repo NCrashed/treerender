@@ -73,7 +73,7 @@ struct Crumbs {
   /// Return current subtree index within all other subtrees of
   /// the same depth. It is index of sell if the tree is filled
   /// with cubes of same size of the current subtree.
-  v3s gridIndex() inout {
+  v3s index() inout {
     auto d = depth;
     v3s go(v3s acc, size_t i) {
       if(i >= d) return acc;
@@ -82,13 +82,45 @@ struct Crumbs {
     return go(v3s(0, 0, 0), 0);
   }
   unittest {
-    assert(Crumbs().gridIndex == v3s(0, 0, 0));
-    assert(Crumbs(Child.frontRightBottom).gridIndex == v3s(1, 1, 0));
-    assert(Crumbs(Child.frontRightTop).gridIndex == v3s(1, 1, 1));
-    assert(Crumbs(Child.frontRightTop, Child.frontRightTop).gridIndex == v3s(3, 3, 3));
-    assert(Crumbs(Child.frontRightTop, Child.backRightBottom).gridIndex == v3s(2, 3, 2));
-    assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).gridIndex == v3s(7, 7, 7));
-    assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).gridIndex == v3s(4, 7, 4));
+    assert(Crumbs().index == v3s(0, 0, 0));
+    assert(Crumbs(Child.frontRightBottom).index == v3s(1, 1, 0));
+    assert(Crumbs(Child.frontRightTop).index == v3s(1, 1, 1));
+    assert(Crumbs(Child.frontRightTop, Child.frontRightTop).index == v3s(3, 3, 3));
+    assert(Crumbs(Child.frontRightTop, Child.backRightBottom).index == v3s(2, 3, 2));
+    assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).index == v3s(7, 7, 7));
+    assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).index == v3s(4, 7, 4));
+  }
+
+  /** Return current subtree index at given depth
+  *
+  * Padding is used as path decend further if requested depth greater than actual.
+  */
+  v3s indexAt(size_t d, Child padding = Child.backLeftBottom)() inout {
+    auto cd = depth;
+    v3s go(v3s acc, size_t i) {
+      if(i >= d) return acc;
+      if(i < cd) {
+        return go((acc << 1) + crumbs[i].childOffset, i+1);
+      } else {
+        return go((acc << 1) + padding.childOffset, i+1);
+      }
+    }
+    return go(v3s(0, 0, 0), 0);
+  }
+  unittest {
+    assert(Crumbs().indexAt!0 == v3s(0, 0, 0));
+    assert(Crumbs().indexAt!1 == v3s(0, 0, 0));
+    assert(Crumbs().indexAt!2 == v3s(0, 0, 0));
+    assert(Crumbs(Child.frontRightBottom).indexAt!1 == v3s(1, 1, 0));
+    assert(Crumbs(Child.frontRightBottom).indexAt!2 == v3s(2, 2, 0));
+    assert(Crumbs(Child.frontRightBottom).indexAt!(2, Child.frontRightTop) == v3s(3, 3, 1));
+    assert(Crumbs(Child.frontRightTop).indexAt!1 == v3s(1, 1, 1));
+    assert(Crumbs(Child.frontRightTop).indexAt!2 == v3s(2, 2, 2));
+    assert(Crumbs(Child.frontRightTop).indexAt!(2, Child.frontRightTop)  == v3s(3, 3, 3));
+    assert(Crumbs(Child.frontRightTop, Child.frontRightTop).indexAt!2 == v3s(3, 3, 3));
+    assert(Crumbs(Child.frontRightTop, Child.backRightBottom).indexAt!2 == v3s(2, 3, 2));
+    assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).indexAt!3 == v3s(7, 7, 7));
+    assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).indexAt!3 == v3s(4, 7, 4));
   }
 }
 
@@ -228,9 +260,19 @@ struct OctoTree(T, index = ushort) {
   }
 
   /// Convert to grid at given depth
-  Nullable!T[2^^d][2^^d][2^^d] toGrid(size_t d)() inout {
+  Nullable!T[2^^d][2^^d][2^^d] toGrid(size_t d)() {
     Nullable!T[2^^d][2^^d][2^^d] res;
-
+    foreach(e; this.overDepth!d) {
+      const start = e[0].indexAt!d;
+      const end = e[0].indexAt!(d, Child.frontRightTop);
+      for(size_t z = start.z; z <= end.z; z++) {
+        for(size_t y = start.y; y <= end.y; y++) {
+          for(size_t x = start.x; x <= end.x; x++) {
+            res[z][y][x] = nullable(e[1]);
+          }
+        }
+      }
+    }
     return res;
   }
 
@@ -247,10 +289,9 @@ version(unittest) {
 unittest {
   auto octree = OctoTree!A.generate(
     (c) => GenCheck.generate,
-    (c) => A(cast(v3f)c.gridIndex),
+    (c) => A(cast(v3f)c.index),
     (a, b) => A((a.value + b.value) / 2)
     );
-  writeln(octree.overDepth!1.map!"a[1]".array);
   assert(octree.overDepth!1.map!"a[1]".array == [
       v3f(0, 0, 0)
     ]);
@@ -259,7 +300,7 @@ unittest {
 unittest {
   auto octree = OctoTree!A.generate(
     (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
-    (c) => A(cast(v3f)c.gridIndex),
+    (c) => A(cast(v3f)c.index),
     (a, b) => A((a.value + b.value) / 2)
     );
   assert(octree.overDepth!1.map!"a[1]".array == [
@@ -275,10 +316,9 @@ unittest {
       else if(c.depth == 1 && c.last == Child.backLeftBottom) return GenCheck.deeper;
       else return GenCheck.generate;
     },
-    (c) => A(cast(v3f)c.gridIndex),
+    (c) => A(cast(v3f)c.index),
     (a, b) => A((a.value + b.value) / 2)
     );
-  writeln(octree.overDepth!2.map!"a[1]".array);
   assert(octree.overDepth!2.map!"a[1]".array == [
       v3f(0, 0, 0), v3f(1, 0, 0), v3f(0, 1, 0), v3f(1, 1, 0),
       v3f(0, 0, 1), v3f(1, 0, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 0, 0), v3f(0, 1, 0), v3f(1, 1, 0),
@@ -291,13 +331,11 @@ unittest {
     v3f value = v3f(0, 0, 0);
     alias value this;
   }
-  import std.stdio;
   auto octree = OctoTree!A.generate(
     (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
-    (c) => A(cast(v3f)c.gridIndex),
+    (c) => A(cast(v3f)c.index),
     (a, b) => A((a.value + b.value) / 2)
     );
-    // writeln(octree.overDepth!1.array);
     assert(octree.toGrid!1 == [
         [
           [v3f(0, 0, 0), v3f(1, 0, 0)],
@@ -306,6 +344,32 @@ unittest {
         [
           [v3f(0, 0, 1), v3f(1, 0, 1)],
           [v3f(0, 1, 1), v3f(1, 1, 1)],
+        ],
+      ]);
+    assert(octree.toGrid!2 == [
+        [
+          [v3f(0, 0, 0), v3f(0, 0, 0), v3f(1, 0, 0), v3f(1, 0, 0)],
+          [v3f(0, 0, 0), v3f(0, 0, 0), v3f(1, 0, 0), v3f(1, 0, 0)],
+          [v3f(0, 1, 0), v3f(0, 1, 0), v3f(1, 1, 0), v3f(1, 1, 0)],
+          [v3f(0, 1, 0), v3f(0, 1, 0), v3f(1, 1, 0), v3f(1, 1, 0)],
+        ],
+        [
+          [v3f(0, 0, 0), v3f(0, 0, 0), v3f(1, 0, 0), v3f(1, 0, 0)],
+          [v3f(0, 0, 0), v3f(0, 0, 0), v3f(1, 0, 0), v3f(1, 0, 0)],
+          [v3f(0, 1, 0), v3f(0, 1, 0), v3f(1, 1, 0), v3f(1, 1, 0)],
+          [v3f(0, 1, 0), v3f(0, 1, 0), v3f(1, 1, 0), v3f(1, 1, 0)],
+        ],
+        [
+          [v3f(0, 0, 1), v3f(0, 0, 1), v3f(1, 0, 1), v3f(1, 0, 1)],
+          [v3f(0, 0, 1), v3f(0, 0, 1), v3f(1, 0, 1), v3f(1, 0, 1)],
+          [v3f(0, 1, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 1, 1)],
+          [v3f(0, 1, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 1, 1)],
+        ],
+        [
+          [v3f(0, 0, 1), v3f(0, 0, 1), v3f(1, 0, 1), v3f(1, 0, 1)],
+          [v3f(0, 0, 1), v3f(0, 0, 1), v3f(1, 0, 1), v3f(1, 0, 1)],
+          [v3f(0, 1, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 1, 1)],
+          [v3f(0, 1, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 1, 1)],
         ],
       ]);
 }
