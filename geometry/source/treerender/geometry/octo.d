@@ -58,7 +58,7 @@ struct Crumbs {
     return crumbs.length;
   }
 
-  /// Return last element in crumbs
+  /// Return last element in crumbs. Doesn't check if crumbs empty.
   Child last() inout {
     return crumbs[$-1];
   }
@@ -175,13 +175,12 @@ struct OctoTree(T, index = ushort) {
         this.tree = tree;
         crumbs = Crumbs();
         path = Array!index(tree.root);
-        popFront();
+        if(d > 0 && !tree.nodes[tree.root].isLeaf) popFront();
       }
 
       void popFront() {
         import std.stdio;
         void ascend()() {
-          writeln("Ascend ", crumbs[].array, " ", path[].array);
           if(path.length == 0) return;
           if(crumbs.length == 0) {
             path.removeBack();
@@ -197,20 +196,20 @@ struct OctoTree(T, index = ushort) {
             const next = mnext.get;
             crumbs.insertBack(next);
             path.insertBack(node.children[cast(size_t)next]);
-            descend();
+            descend!false();
           }
         }
-        void descend()() {
-          writeln("Descend ", crumbs[].array, " ", path[].array);
+        void descend(bool doAscend = true)() {
           const node = tree.nodes[path[$-1]];
-          writeln(crumbs.depth >= d, " ", node.isLeaf);
-          if(crumbs.depth >= d || node.isLeaf) ascend();
+          if(crumbs.depth >= d || node.isLeaf) {
+            static if(doAscend) ascend();
+          }
           else {
             size_t i = 0;
             while((node.flags | i) == 0) i++;
             crumbs.insertBack(cast(Child)i);
             path.insertBack(node.children[i]);
-            if(crumbs.depth < d && !tree.nodes[path[$-1]].isLeaf) descend();
+            descend!false();
           }
         }
         descend();
@@ -236,6 +235,57 @@ struct OctoTree(T, index = ushort) {
   }
 
 }
+version(unittest) {
+  import std.algorithm;
+  import std.stdio;
+  struct A {
+    v3f value = v3f(0, 0, 0);
+    alias value this;
+  }
+}
+/// overDepth test depth 0
+unittest {
+  auto octree = OctoTree!A.generate(
+    (c) => GenCheck.generate,
+    (c) => A(cast(v3f)c.gridIndex),
+    (a, b) => A((a.value + b.value) / 2)
+    );
+  writeln(octree.overDepth!1.map!"a[1]".array);
+  assert(octree.overDepth!1.map!"a[1]".array == [
+      v3f(0, 0, 0)
+    ]);
+}
+/// overDepth test depth 1
+unittest {
+  auto octree = OctoTree!A.generate(
+    (c) => c.depth >= 1 ? GenCheck.generate : GenCheck.deeper, // Stop right after root node
+    (c) => A(cast(v3f)c.gridIndex),
+    (a, b) => A((a.value + b.value) / 2)
+    );
+  assert(octree.overDepth!1.map!"a[1]".array == [
+      v3f(0, 0, 0), v3f(1, 0, 0), v3f(0, 1, 0), v3f(1, 1, 0),
+      v3f(0, 0, 1), v3f(1, 0, 1), v3f(0, 1, 1), v3f(1, 1, 1),
+    ]);
+}
+/// overDepth test depth 2
+unittest {
+  auto octree = OctoTree!A.generate(
+    (c) {
+      if(c.depth == 0) return GenCheck.deeper;
+      else if(c.depth == 1 && c.last == Child.backLeftBottom) return GenCheck.deeper;
+      else return GenCheck.generate;
+    },
+    (c) => A(cast(v3f)c.gridIndex),
+    (a, b) => A((a.value + b.value) / 2)
+    );
+  writeln(octree.overDepth!2.map!"a[1]".array);
+  assert(octree.overDepth!2.map!"a[1]".array == [
+      v3f(0, 0, 0), v3f(1, 0, 0), v3f(0, 1, 0), v3f(1, 1, 0),
+      v3f(0, 0, 1), v3f(1, 0, 1), v3f(0, 1, 1), v3f(1, 1, 1), v3f(1, 0, 0), v3f(0, 1, 0), v3f(1, 1, 0),
+                                                v3f(0, 0, 1), v3f(1, 0, 1), v3f(0, 1, 1), v3f(1, 1, 1),
+    ]);
+}
+/// Grid tests
 unittest {
   struct A {
     v3f value = v3f(0, 0, 0);
@@ -247,7 +297,7 @@ unittest {
     (c) => A(cast(v3f)c.gridIndex),
     (a, b) => A((a.value + b.value) / 2)
     );
-    writeln(octree.overDepth!1.array);
+    // writeln(octree.overDepth!1.array);
     assert(octree.toGrid!1 == [
         [
           [v3f(0, 0, 0), v3f(1, 0, 0)],
