@@ -11,6 +11,7 @@ import treerender.geometry.greedy;
 import treerender.geometry.loader.obj;
 import treerender.geometry.mesh;
 import treerender.geometry.octo;
+import treerender.geometry.octomesh;
 import treerender.geometry.voxel;
 import treerender.input;
 import treerender.math;
@@ -164,16 +165,31 @@ void main()
 
 	// auto mesh = loadObj("./assets/model/suzanne.obj");
 	// auto mesh = makeCube();
-	enum gridSize = 32;
-	auto grid = Voxels!(Color, gridSize).replicate(Color.empty);
-	enum n = 30000;
-	foreach(i; 0..n) {
-		auto x = uniform(0, gridSize);
-		auto y = uniform(0, gridSize);
-		auto z = uniform(0, gridSize);
-		grid[x, y, z] = Color.red;
+
+	// enum gridSize = 32;
+	// auto grid = Voxels!(Color, gridSize).replicate(Color.empty);
+	// enum n = 100;
+	// foreach(i; 0..n) {
+	// 	auto x = uniform(0, gridSize);
+	// 	auto y = uniform(0, gridSize);
+	// 	auto z = uniform(0, gridSize);
+	// 	grid[x, y, z] = Color.red;
+	// }
+	// auto mesh = grid.greedyTriangulate!(Primitive.triangles);
+	enum rad = 0.5;
+	enum prim = Primitive.triangles;
+	auto tree = octoProcedural!(Color, 16, prim)(2,
+			(v) => (v - rad).lengthSquared <= rad*rad ? Color.red : Color.empty
+		);
+	MeshBuffers!Color[Crumbs] buffers;
+	foreach(e; tree.overLeaf) {
+		buffers[e[0]] = MeshBuffers.allocate(e[1].mesh);
 	}
-	auto mesh = grid.greedyTriangulate!(Primitive.triangles);
+	scope(exit) {
+		foreach(v; buffers) {
+			v.dispose();
+		}
+	}
 
 	// Here we define which components are supported by the world
 	auto world = new World("./assets");
@@ -185,37 +201,6 @@ void main()
 	auto inputEvents = InputEvents();
 
 	SDL_GL_SetSwapInterval(0); // Disable VSync
-
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	scope(exit) glDeleteBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, mesh.vertices.length * v3f.sizeof, &mesh.vertices[0], GL_STATIC_DRAW);
-
-	GLuint uvbuffer;
-	glGenBuffers(1, &uvbuffer);
-	scope(exit) glDeleteBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, mesh.uvs.length * v2f.sizeof, &mesh.uvs[0], GL_STATIC_DRAW);
-
-	GLuint normalbuffer;
-	glGenBuffers(1, &normalbuffer);
-	scope(exit) glDeleteBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, mesh.normals.length * v3f.sizeof, &mesh.normals[0], GL_STATIC_DRAW);
-
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	scope(exit) glDeleteBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, mesh.data.length * mesh.Data.sizeof, &mesh.data[0], GL_STATIC_DRAW);
-
-	// Generate a buffer for the indices as well
-	GLuint elementbuffer;
-	glGenBuffers(1, &elementbuffer);
-	scope(exit) glDeleteBuffers(1, &elementbuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.length * 3 * uint.sizeof, &mesh.indices[0] , GL_STATIC_DRAW);
 
 	// Get a handle for our "LightPosition" uniform
 	glUseProgram(programId);
@@ -252,78 +237,87 @@ void main()
 		auto lightPos = v3f(-4,-4,4);
 		glUniform3f(lightId, lightPos.x, lightPos.y, lightPos.z);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			null                // array buffer offset
-		);
+		foreach(e; tree.overLeaf) {
+			auto crumbs = e[0];
+			auto node = e[1];
+			if(crumbs in buffers) {
+				auto buffer = buffers[crumbs];
 
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-		glVertexAttribPointer(
-			1,                                // attribute
-			2,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			null                             // array buffer offset
-		);
-
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glVertexAttribPointer(
-			2,                                // attribute
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			null                              // array buffer offset
-		);
-
-		// 4rd attribute buffer : colors
-		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(
-			3,                                // attribute
-			4,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			null                              // array buffer offset
-		);
-
-		// Index buffer
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-
-		// Draw the triangles !
-		final switch(mesh.primitive) {
-			case(Primitive.triangles): {
-				glDrawElements(
-					GL_TRIANGLES,                         // mode
-					3 * cast(uint)mesh.indices.length,    // count
-					GL_UNSIGNED_INT,                      // type
-					null                                  // element array buffer offset
+				// 1rst attribute buffer : vertices
+				glEnableVertexAttribArray(0);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer.vertexbuffer);
+				glVertexAttribPointer(
+					0,                  // attribute
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					0,                  // stride
+					null                // array buffer offset
 				);
-				break;
-			}
-			case(Primitive.lines): {
-				glDrawElements(
-					GL_LINES,                             // mode
-					2 * cast(uint)mesh.indices.length,    // count
-					GL_UNSIGNED_INT,                      // type
-					null                                  // element array buffer offset
+
+				// 2nd attribute buffer : UVs
+				glEnableVertexAttribArray(1);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer.uvbuffer);
+				glVertexAttribPointer(
+					1,                                // attribute
+					2,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					null                             // array buffer offset
 				);
-				break;
+
+				// 3rd attribute buffer : normals
+				glEnableVertexAttribArray(2);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer.normalbuffer);
+				glVertexAttribPointer(
+					2,                                // attribute
+					3,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					null                              // array buffer offset
+				);
+
+				// 4rd attribute buffer : colors
+				glEnableVertexAttribArray(3);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer.colorbuffer);
+				glVertexAttribPointer(
+					3,                                // attribute
+					4,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					null                              // array buffer offset
+				);
+
+				// Index buffer
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.elementbuffer);
+
+				// Draw the triangles !
+				final switch(node.mesh.primitive) {
+					case(Primitive.triangles): {
+						glDrawElements(
+							GL_TRIANGLES,                         // mode
+							3 * cast(uint)node.mesh.indices.length,    // count
+							GL_UNSIGNED_INT,                      // type
+							null                                  // element array buffer offset
+						);
+						break;
+					}
+					case(Primitive.lines): {
+						glDrawElements(
+							GL_LINES,                             // mode
+							2 * cast(uint)node.mesh.indices.length,    // count
+							GL_UNSIGNED_INT,                      // type
+							null                                  // element array buffer offset
+						);
+						break;
+					}
+				}
 			}
 		}
+
 
 		SDL_GL_SwapWindow(window);
 

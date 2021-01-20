@@ -1,5 +1,6 @@
 module treerender.geometry.octo;
 
+import std.algorithm;
 import std.container.array;
 import std.range;
 import std.traits;
@@ -70,6 +71,17 @@ struct Crumbs {
     return Crumbs(ret);
   }
 
+  /// Get size of grid on given depth of tree.
+  size_t gridSize() inout {
+    return 2 ^^ depth;
+  }
+  unittest {
+    assert(Crumbs().gridSize == 1);
+    assert(Crumbs(Child.frontRightBottom).gridSize == 2);
+    assert(Crumbs(Child.frontRightTop).gridSize == 2);
+    assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).gridSize == 8);
+  }
+
   /// Return current subtree index within all other subtrees of
   /// the same depth. It is index of sell if the tree is filled
   /// with cubes of same size of the current subtree.
@@ -89,6 +101,21 @@ struct Crumbs {
     assert(Crumbs(Child.frontRightTop, Child.backRightBottom).index == v3s(2, 3, 2));
     assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).index == v3s(7, 7, 7));
     assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).index == v3s(4, 7, 4));
+  }
+
+  /// Return relative point in tree where the current child cube starts
+  v3f cubeStart() {
+    return cast(v3f)this.index / cast(float)this.gridSize;
+  }
+
+  /// Return relative point in tree where the current child cube ends
+  v3f cubeEnd() {
+    return cast(v3f)(this.index + 1) / cast(float)this.gridSize;
+  }
+
+  /// Return relative point in tree where the current child cube center located
+  v3f cubeCenter() {
+    return (cast(v3f)(this.index) + 0.5) / cast(float)this.gridSize;
   }
 
   /** Return current subtree index at given depth
@@ -121,6 +148,14 @@ struct Crumbs {
     assert(Crumbs(Child.frontRightTop, Child.backRightBottom).indexAt!2 == v3s(2, 3, 2));
     assert(Crumbs(Child.frontRightTop, Child.frontRightTop, Child.frontRightTop).indexAt!3 == v3s(7, 7, 7));
     assert(Crumbs(Child.frontRightTop, Child.backRightBottom, Child.backRightBottom).indexAt!3 == v3s(4, 7, 4));
+  }
+
+  size_t toHash() const @trusted pure nothrow {
+    return crumbs[].map!((c) => c.hashOf()).sum;
+  }
+
+  bool opEquals(ref const Crumbs s) const @trusted pure nothrow {
+    return crumbs[].equal(s.crumbs[]);
   }
 }
 
@@ -196,9 +231,9 @@ struct OctoTree(T, index = ushort) {
     return tree;
   }
 
-  /// Create range that iterates nodes at maximum depth `d`
-  auto overDepth(size_t d)() {
-    struct OverDepth {
+  /// Create range that iterates nodes that satisfy predicate
+  auto over(bool delegate(Crumbs) pred) {
+    struct Over {
       This tree;
       Crumbs crumbs;
       Array!index path;
@@ -233,7 +268,7 @@ struct OctoTree(T, index = ushort) {
         }
         void descend(bool doAscend = true)() {
           const node = tree.nodes[path[$-1]];
-          if(crumbs.depth >= d || node.isLeaf) {
+          if(!pred(crumbs) || node.isLeaf) {
             static if(doAscend) ascend();
           }
           else {
@@ -256,7 +291,17 @@ struct OctoTree(T, index = ushort) {
       }
     }
 
-    return OverDepth(this);
+    return Over(this);
+  }
+
+  /// Create range that iterates all leaf nodes
+  auto overLeaf() {
+    return over((_) => true);
+  }
+
+  /// Create range that iterates nodes at maximum depth `d`
+  auto overDepth(size_t d)() {
+    return over((crumbs) => crumbs.depth < d);
   }
 
   /// Convert to grid at given depth

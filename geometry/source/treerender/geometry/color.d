@@ -50,4 +50,15 @@ struct Color {
   T opCast(T)() inout if(is(T: v3f)) {
     return v4f(r, g, b);
   }
+
+  /// Blend with another color with standard alpha blending
+  Color blend(Color c) {
+    Color res;
+    const malpha = (1 - this.a)*c.a;
+    res.a = this.a + malpha;
+    res.r = (this.a * this.r + malpha * c.r) / res.a;
+    res.g = (this.a * this.g + malpha * c.g) / res.a;
+    res.b = (this.a * this.b + malpha * c.b) / res.a;
+    return res;
+  }
 }
