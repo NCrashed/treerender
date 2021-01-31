@@ -16,6 +16,7 @@ import treerender.geometry.voxel;
 import treerender.input;
 import treerender.math;
 import treerender.render;
+import treerender.render.mesh;
 import treerender.world;
 
 /* Import the sharedlib module for error handling. Assigning an alias
@@ -181,9 +182,9 @@ void main()
 	auto tree = octoProcedural!(Color, 16, prim)(2,
 			(v) => (v - rad).lengthSquared <= rad*rad ? Color.red : Color.empty
 		);
-	MeshBuffers!Color[Crumbs] buffers;
+	MeshBuffers!Color[const Crumbs] buffers;
 	foreach(e; tree.overLeaf) {
-		buffers[e[0]] = MeshBuffers.allocate(e[1].mesh);
+		buffers[e[0]] = MeshBuffers!Color.allocate(e[1].mesh);
 	}
 	scope(exit) {
 		foreach(v; buffers) {
@@ -281,7 +282,7 @@ void main()
 
 				// 4rd attribute buffer : colors
 				glEnableVertexAttribArray(3);
-				glBindBuffer(GL_ARRAY_BUFFER, buffer.colorbuffer);
+				glBindBuffer(GL_ARRAY_BUFFER, buffer.databuffer);
 				glVertexAttribPointer(
 					3,                                // attribute
 					4,                                // size

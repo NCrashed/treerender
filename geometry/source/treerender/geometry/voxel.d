@@ -23,7 +23,9 @@ template isVoxel(V) {
         is(typeof(V.init) == V)
         && is(ReturnType!((V v) => V.empty) == V)
         && is(ReturnType!((V v) => v.opaque) == bool)
-        && hasFunctionAttributes!(V.opaque, "inout");
+        && hasFunctionAttributes!(V.opaque, "inout")
+        && is(ReturnType!((V v) => v.blend(v)) == V)
+        && hasFunctionAttributes!(V.blend, "inout");
 }
 
 unittest {
@@ -34,6 +36,7 @@ unittest {
   struct C {
     enum empty = C.init;
     bool opaque() { return true; }
+    C blend(C other) { return C(); }
   }
   struct D {
     bool opaque() { return true; }
@@ -47,10 +50,12 @@ unittest {
     alias v This;
     enum empty = V.init;
     bool opaque() inout { return true; }
+    V blend(V v) inout { return V(); }
   }
   struct C2 {
     enum empty = C2.init;
     bool opaque() inout { return true; }
+    C2 blend(C2 v) inout { return C2(); }
   }
 
   static assert(!isVoxel!C);
@@ -85,6 +90,19 @@ struct Voxels(T, size_t n) if(isVoxel!T) {
     T[length] data;
     data[] = val;
     return This(cast(T[n][n][n])data);
+  }
+
+  /// Blend voxels of other grid
+  This blend(This other) {
+    This ret;
+    foreach(x; 0..n) {
+      foreach(y; 0..n) {
+        foreach(z; 0..n) {
+          ret.data[z][y][x] = this.data[z][y][x].blend(other.data[z][y][x]);
+        }
+      }
+    }
+    return ret;
   }
 
   /// Check that given index in bounds of voxel grid

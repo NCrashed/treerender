@@ -104,17 +104,17 @@ struct Crumbs {
   }
 
   /// Return relative point in tree where the current child cube starts
-  v3f cubeStart() {
+  v3f cubeStart() inout {
     return cast(v3f)this.index / cast(float)this.gridSize;
   }
 
   /// Return relative point in tree where the current child cube ends
-  v3f cubeEnd() {
+  v3f cubeEnd() inout {
     return cast(v3f)(this.index + 1) / cast(float)this.gridSize;
   }
 
   /// Return relative point in tree where the current child cube center located
-  v3f cubeCenter() {
+  v3f cubeCenter() inout {
     return (cast(v3f)(this.index) + 0.5) / cast(float)this.gridSize;
   }
 
@@ -242,7 +242,7 @@ struct OctoTree(T, index = ushort) {
         this.tree = tree;
         crumbs = Crumbs();
         path = Array!index(tree.root);
-        if(d > 0 && !tree.nodes[tree.root].isLeaf) popFront();
+        if(!tree.nodes[tree.root].isLeaf) popFront();
       }
 
       void popFront() {

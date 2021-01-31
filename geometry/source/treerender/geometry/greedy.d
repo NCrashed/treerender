@@ -27,6 +27,7 @@ unittest {
     bool v = false;
     enum empty = V.init;
     bool opaque() inout { return true; }
+    V blend(V other) inout { return V(other.v || v); }
   }
   auto grid = Voxels!(V, 1).replicate(V(true));
   auto mesh = grid.greedyTriangulate!(Primitive.triangles);

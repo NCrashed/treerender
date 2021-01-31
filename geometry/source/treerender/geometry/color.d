@@ -52,7 +52,7 @@ struct Color {
   }
 
   /// Blend with another color with standard alpha blending
-  Color blend(Color c) {
+  Color blend(Color c) inout {
     Color res;
     const malpha = (1 - this.a)*c.a;
     res.a = this.a + malpha;
